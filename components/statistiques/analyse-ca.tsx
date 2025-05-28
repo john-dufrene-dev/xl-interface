@@ -1111,25 +1111,12 @@ export default function AnalyseCA() {
                         stackId="a"
                         fill="#e74c3c"
                         name="CA HT"
-                        label={(props) => {
+                        label={(props: any) => {
                           const { x, y, width, payload } = props
-                          if (
-                            !payload ||
-                            typeof payload.ca !== "number" ||
-                            typeof payload.fraisLivraison !== "number"
-                          ) {
-                            return null
-                          }
+                          if (!payload || !x || !y || !width) return <></>
                           const total = payload.ca + payload.fraisLivraison
                           return (
-                            <text
-                              x={x + width / 2}
-                              y={y - 10}
-                              fill="#000"
-                              textAnchor="middle"
-                              dominantBaseline="middle"
-                              fontSize={12}
-                            >
+                            <text x={x} y={y} fill="#666" textAnchor="middle" dy={-6}>
                               {new Intl.NumberFormat("fr-FR", {
                                 style: "currency",
                                 currency: "EUR",
@@ -1144,28 +1131,14 @@ export default function AnalyseCA() {
                         stackId="a"
                         fill="#000"
                         name="Frais Livraison"
-                        label={(props) => {
+                        label={(props: any) => {
                           const { x, y, width, payload } = props
-                          if (
-                            !payload ||
-                            typeof payload.fraisLivraison !== "number" ||
-                            typeof payload.ca !== "number"
-                          ) {
-                            return null
-                          }
+                          if (!payload || !x || !y || !width) return <></>
                           const pourcentage =
                             payload.pourcentage ||
                             ((payload.fraisLivraison / (payload.ca + payload.fraisLivraison)) * 100).toFixed(1) + "%"
                           return (
-                            <text
-                              x={x + width / 2}
-                              y={y - 30}
-                              fill="#e74c3c"
-                              textAnchor="middle"
-                              dominantBaseline="middle"
-                              fontWeight="bold"
-                              fontSize={14}
-                            >
+                            <text x={x} y={y} fill="#e74c3c" textAnchor="middle" dominantBaseline="middle" fontWeight="bold" fontSize={14}>
                               {pourcentage}
                             </text>
                           )
@@ -3742,4 +3715,18 @@ export default function AnalyseCA() {
                                 {new Intl.NumberFormat("fr-FR", {
                                   style: "currency",
                                   currency: "EUR",
-                                }).format(stats.ca\
+                                }).format(stats.caLivraison)}
+                              </TableCell>
+                            </TableRow>
+                          ))
+                      })()}
+                  </TableBody>
+                </Table>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
+    </div>
+  )
+}
