@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, use } from "react"
 import { useRouter } from "next/navigation"
 import { format } from "date-fns"
 import { fr } from "date-fns/locale"
@@ -43,6 +43,12 @@ type SiteDetail = {
   mail_contact_form_link?: string
   mail_legal_notice_link?: string
   mail_shipping_email?: string
+  // Configuration des exclusions d'emails
+  mail_exclusions?: {
+    type: "startsWith" | "contains" | "regex"
+    pattern: string
+    description?: string
+  }[]
   // Nouveaux champs pour la configuration des marketplaces
   marketplace_amazon?: boolean
   marketplace_cdiscount?: boolean
@@ -53,8 +59,9 @@ type SiteDetail = {
   marketplace_autres?: boolean
 }
 
-export default function SiteDetailPage({ params }: { params: { id: string } }) {
+export default function SiteDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter()
+  const resolvedParams = use(params)
   const [site, setSite] = useState<SiteDetail | null>(null)
   const [loading, setLoading] = useState(true)
   const [isEditing, setIsEditing] = useState(false)
@@ -62,11 +69,13 @@ export default function SiteDetailPage({ params }: { params: { id: string } }) {
 
   // Modifier les données de démonstration pour le détail du site
   useEffect(() => {
+    if (!resolvedParams?.id) return
+
     // Dans un cas réel, vous feriez un appel API ici
     setTimeout(() => {
       const siteData: SiteDetail = {
-        id: params.id,
-        name: `Site ${params.id}`,
+        id: resolvedParams.id,
+        name: `Site ${resolvedParams.id}`,
         url: "https://www.monsite-ecommerce.fr",
         api_key: "api_key_123456",
         status: "active",
@@ -88,13 +97,31 @@ export default function SiteDetailPage({ params }: { params: { id: string } }) {
         mail_contact_form_link: "https://www.monsite-ecommerce.fr/contact",
         mail_legal_notice_link: "https://www.monsite-ecommerce.fr/mentions-legales",
         mail_shipping_email: "expedition@monsite-ecommerce.fr",
+        // Données de démonstration pour les exclusions d'emails
+        mail_exclusions: [
+          {
+            type: "startsWith",
+            pattern: "test@",
+            description: "Exclure les adresses de test"
+          },
+          {
+            type: "contains",
+            pattern: "spam",
+            description: "Exclure les adresses contenant 'spam'"
+          },
+          {
+            type: "regex",
+            pattern: "^.*@temp\\.com$",
+            description: "Exclure les adresses temporaires"
+          }
+        ],
         // Données de démonstration pour la configuration des marketplaces
         marketplace_amazon: true,
         marketplace_cdiscount: true,
         marketplace_docmorris: false,
-        marketplace_tiktok: params.id === "1" ? true : false,
-        marketplace_shein: params.id === "2" ? true : false,
-        marketplace_lcdp: params.id === "3" ? true : false,
+        marketplace_tiktok: resolvedParams.id === "1" ? true : false,
+        marketplace_shein: resolvedParams.id === "2" ? true : false,
+        marketplace_lcdp: resolvedParams.id === "3" ? true : false,
         marketplace_autres: true,
       }
 
@@ -102,7 +129,7 @@ export default function SiteDetailPage({ params }: { params: { id: string } }) {
       setFormData(siteData)
       setLoading(false)
     }, 500)
-  }, [params.id])
+  }, [resolvedParams?.id])
 
   // Fonction pour obtenir la couleur du badge en fonction du statut
   const getStatusColor = (status: string) => {
@@ -593,6 +620,135 @@ export default function SiteDetailPage({ params }: { params: { id: string } }) {
                     <div>{site.mail_shipping_email || "Non défini"}</div>
                   )}
                 </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Exclusions d'emails</CardTitle>
+                <CardDescription>Configurez les règles d'exclusion pour les adresses email</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {isEditing ? (
+                  <div className="space-y-4">
+                    {(formData.mail_exclusions || []).map((exclusion, index) => (
+                      <div key={index} className="flex items-start gap-4 p-4 border rounded-lg">
+                        <div className="flex-1 space-y-4">
+                          <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                              <Label>Type d'exclusion</Label>
+                              <Select
+                                value={exclusion.type}
+                                onValueChange={(value) => {
+                                  const newExclusions = [...(formData.mail_exclusions || [])]
+                                  newExclusions[index] = { ...exclusion, type: value as "startsWith" | "contains" | "regex" }
+                                  handleChange("mail_exclusions", newExclusions)
+                                }}
+                              >
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Sélectionnez un type" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="startsWith">Commence par</SelectItem>
+                                  <SelectItem value="contains">Contient</SelectItem>
+                                  <SelectItem value="regex">Expression régulière</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                            <div className="space-y-2">
+                              <Label>Motif</Label>
+                              <Input
+                                value={exclusion.pattern}
+                                onChange={(e) => {
+                                  const newExclusions = [...(formData.mail_exclusions || [])]
+                                  newExclusions[index] = { ...exclusion, pattern: e.target.value }
+                                  handleChange("mail_exclusions", newExclusions)
+                                }}
+                                placeholder={exclusion.type === "regex" ? "^test@.*\\.com$" : "test@example.com"}
+                              />
+                            </div>
+                          </div>
+                          <div className="space-y-2">
+                            <Label>Description (optionnelle)</Label>
+                            <Input
+                              value={exclusion.description || ""}
+                              onChange={(e) => {
+                                const newExclusions = [...(formData.mail_exclusions || [])]
+                                newExclusions[index] = { ...exclusion, description: e.target.value }
+                                handleChange("mail_exclusions", newExclusions)
+                              }}
+                              placeholder="Ex: Exclure les adresses de test"
+                            />
+                          </div>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => {
+                            const newExclusions = [...(formData.mail_exclusions || [])]
+                            newExclusions.splice(index, 1)
+                            handleChange("mail_exclusions", newExclusions)
+                          }}
+                        >
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            width="24"
+                            height="24"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            className="h-4 w-4"
+                          >
+                            <path d="M3 6h18" />
+                            <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
+                            <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
+                          </svg>
+                        </Button>
+                      </div>
+                    ))}
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        const newExclusions = [...(formData.mail_exclusions || [])]
+                        newExclusions.push({
+                          type: "startsWith",
+                          pattern: "",
+                          description: ""
+                        })
+                        handleChange("mail_exclusions", newExclusions)
+                      }}
+                    >
+                      Ajouter une exclusion
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {site.mail_exclusions && site.mail_exclusions.length > 0 ? (
+                      site.mail_exclusions.map((exclusion, index) => (
+                        <div key={index} className="p-4 border rounded-lg">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <div className="font-medium">
+                                {exclusion.type === "startsWith" && "Commence par"}
+                                {exclusion.type === "contains" && "Contient"}
+                                {exclusion.type === "regex" && "Expression régulière"}
+                              </div>
+                              <div className="text-sm text-muted-foreground">{exclusion.pattern}</div>
+                              {exclusion.description && (
+                                <div className="text-sm text-muted-foreground mt-1">{exclusion.description}</div>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="text-sm text-muted-foreground">Aucune exclusion configurée</div>
+                    )}
+                  </div>
+                )}
               </CardContent>
             </Card>
           </div>
