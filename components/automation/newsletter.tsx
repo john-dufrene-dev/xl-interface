@@ -1,12 +1,14 @@
 "use client"
 
-import { useState } from "react"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { useState, useEffect } from "react"
+import { Plus, Edit, Trash2, BarChart4, ArrowLeft, Info, Eye } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { PlusCircle } from "lucide-react"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { DataTable } from "@/components/data-table"
 import NewsletterForm from "./newsletter-form"
 import NewsletterStats from "./newsletter-stats"
+import { FilterBar } from "@/components/filter-bar"
 
 // Types
 export type NewsletterTemplate = "simple" | "promotionnel" | "informatif"
@@ -112,30 +114,134 @@ const exampleNewsletters: Newsletter[] = [
   },
 ]
 
+const columns = [
+  {
+    id: "name",
+    accessorKey: "name",
+    header: "Nom",
+    cell: ({ row }: any) => (
+      <div>
+        <div className="font-medium">{row.original.name}</div>
+        <div className="text-sm text-muted-foreground">Site: {row.original.siteId}</div>
+      </div>
+    ),
+  },
+  {
+    id: "status",
+    accessorKey: "status",
+    header: "Statut",
+    cell: ({ row }: any) => (
+      <span
+        className={`px-2 py-1 rounded-full text-xs font-medium ${
+          row.original.status === "actif"
+            ? "bg-green-100 text-green-800"
+            : row.original.status === "brouillon"
+            ? "bg-yellow-100 text-yellow-800"
+            : "bg-gray-100 text-gray-800"
+        }`}
+      >
+        {row.original.status.charAt(0).toUpperCase() + row.original.status.slice(1)}
+      </span>
+    ),
+  },
+  {
+    id: "createdAt",
+    accessorKey: "createdAt",
+    header: "Créée le",
+    cell: ({ row }: any) => new Date(row.original.createdAt).toLocaleDateString("fr-FR"),
+  },
+  {
+    id: "audience",
+    header: "Audience",
+    cell: ({ row }: any) => (
+      <span>{row.original.stats.sent} destinataires</span>
+    ),
+  },
+]
+
 export default function NewsletterComponent() {
+  const [activeTab, setActiveTab] = useState("liste")
   const [newsletters, setNewsletters] = useState<Newsletter[]>(exampleNewsletters)
-  const [selectedNewsletter, setSelectedNewsletter] = useState<Newsletter | null>(null)
-  const [isEditing, setIsEditing] = useState(false)
+  const [filteredNewsletters, setFilteredNewsletters] = useState<Newsletter[]>(exampleNewsletters)
+  const [selectedSite, setSelectedSite] = useState<string>("")
+  const [dateRange, setDateRange] = useState<{ from: Date; to: Date } | undefined>(undefined)
+  const [editingNewsletter, setEditingNewsletter] = useState<Newsletter | null>(null)
+  const [selectedNewsletterForDetail, setSelectedNewsletterForDetail] = useState<Newsletter | null>(null)
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [newsletterToDelete, setNewsletterToDelete] = useState<Newsletter | null>(null)
+
+  // Filtres
+  useEffect(() => {
+    let filtered = [...newsletters]
+    
+    if (selectedSite) {
+      filtered = filtered.filter(n => n.siteId === selectedSite)
+    }
+    
+    if (dateRange?.from && dateRange?.to) {
+      filtered = filtered.filter(n => {
+        const created = new Date(n.createdAt)
+        return created >= dateRange.from && created <= dateRange.to
+      })
+    }
+    
+    setFilteredNewsletters(filtered)
+  }, [newsletters, selectedSite, dateRange])
+
+  const handleSiteChange = (site: string) => {
+    setSelectedSite(site)
+  }
+
+  const handleDateChange = (range: { from?: Date; to?: Date } | undefined) => {
+    if (range?.from && range?.to) {
+      setDateRange({ from: range.from, to: range.to })
+    } else {
+      setDateRange(undefined)
+    }
+  }
+
+  const handleResetFilters = () => {
+    setSelectedSite("")
+    setDateRange(undefined)
+    setFilteredNewsletters(newsletters)
+  }
 
   const handleCreateNewsletter = () => {
-    setSelectedNewsletter(null)
-    setIsEditing(true)
+    setEditingNewsletter(null)
+    setActiveTab("creation")
   }
 
   const handleEditNewsletter = (newsletter: Newsletter) => {
-    setSelectedNewsletter(newsletter)
-    setIsEditing(true)
+    setEditingNewsletter(newsletter)
+    setActiveTab("creation")
   }
 
-  const handleSaveNewsletter = (newsletter: Newsletter) => {
-    if (selectedNewsletter) {
-      // Mise à jour d'une newsletter existante
-      setNewsletters(newsletters.map((s) => (s.id === newsletter.id ? newsletter : s)))
+  const handleDeleteClick = (newsletter: Newsletter) => {
+    setNewsletterToDelete(newsletter)
+    setDeleteDialogOpen(true)
+  }
+
+  const confirmDelete = () => {
+    if (newsletterToDelete) {
+      setNewsletters(newsletters.filter((n) => n.id !== newsletterToDelete.id))
+    }
+    setDeleteDialogOpen(false)
+    setNewsletterToDelete(null)
+  }
+
+  const handleViewNewsletterDetail = (newsletter: Newsletter) => {
+    setSelectedNewsletterForDetail(newsletter)
+    setActiveTab("detail")
+  }
+
+  const handleSubmitNewsletter = (newsletter: Newsletter) => {
+    let updatedNewsletters
+    if (editingNewsletter) {
+      updatedNewsletters = newsletters.map((n) => (n.id === newsletter.id ? newsletter : n))
     } else {
-      // Création d'une nouvelle newsletter
       const newNewsletter = {
         ...newsletter,
-        id: `${newsletters.length + 1}`,
+        id: `${Date.now()}`,
         createdAt: new Date().toISOString(),
         lastSent: null,
         nextSend: null,
@@ -146,185 +252,265 @@ export default function NewsletterComponent() {
           unsubscribed: 0,
         },
       }
-      setNewsletters([...newsletters, newNewsletter])
+      updatedNewsletters = [...newsletters, newNewsletter]
     }
-    setIsEditing(false)
-    setSelectedNewsletter(null)
+    setNewsletters(updatedNewsletters)
+    setActiveTab("liste")
   }
 
-  const handleCancelEdit = () => {
-    setIsEditing(false)
-    setSelectedNewsletter(null)
-  }
+  // Colonnes avec actions
+  const columnsWithActions = [
+    ...columns,
+    {
+      id: "actions",
+      cell: ({ row }: any) => (
+        <div className="flex items-center gap-2">
+          <Button variant="ghost" size="icon" title="Détail" onClick={() => handleViewNewsletterDetail(row.original)}>
+            <Info className="h-4 w-4" />
+          </Button>
+          <Button variant="ghost" size="icon" title="Statistiques" onClick={() => setActiveTab("statistiques")}>
+            <BarChart4 className="h-4 w-4" />
+          </Button>
+          <Button variant="ghost" size="icon" title="Modifier" onClick={() => handleEditNewsletter(row.original)}>
+            <Edit className="h-4 w-4" />
+          </Button>
+          <Button variant="ghost" size="icon" title="Supprimer" onClick={() => handleDeleteClick(row.original)}>
+            <Trash2 className="h-4 w-4" />
+          </Button>
+        </div>
+      ),
+    },
+  ]
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-3xl font-bold tracking-tight">Gestion des Newsletters</h2>
-          <p className="text-muted-foreground">
-            Créez et gérez vos campagnes de newsletters pour communiquer avec vos clients.
-          </p>
-        </div>
-        <Button onClick={handleCreateNewsletter}>
-          <PlusCircle className="mr-2 h-4 w-4" />
-          Nouvelle Newsletter
-        </Button>
+    <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+      <div className="flex justify-between items-center">
+        <TabsList>
+          <TabsTrigger value="liste">Liste des newsletters</TabsTrigger>
+          <TabsTrigger value="statistiques">Statistiques</TabsTrigger>
+          <TabsTrigger value="detail">Détail</TabsTrigger>
+        </TabsList>
+        {activeTab === "liste" && (
+          <Button onClick={handleCreateNewsletter}>
+            <Plus className="mr-2 h-4 w-4" /> Nouvelle newsletter
+          </Button>
+        )}
       </div>
 
-      {isEditing ? (
-        <NewsletterForm newsletter={selectedNewsletter} onSave={handleSaveNewsletter} onCancel={handleCancelEdit} />
-      ) : (
-        <Tabs defaultValue="actives" className="space-y-4">
-          <TabsList>
-            <TabsTrigger value="actives">Newsletters actives</TabsTrigger>
-            <TabsTrigger value="brouillons">Brouillons</TabsTrigger>
-            <TabsTrigger value="inactives">Inactives</TabsTrigger>
-            <TabsTrigger value="statistiques">Statistiques</TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="actives" className="space-y-4">
-            {newsletters
-              .filter((n) => n.status === "actif")
-              .map((newsletter) => (
-                <Card
-                  key={newsletter.id}
-                  className="cursor-pointer hover:bg-muted/50 transition-colors"
-                  onClick={() => handleEditNewsletter(newsletter)}
-                >
-                  <CardHeader className="pb-2">
-                    <div className="flex items-center justify-between">
-                      <CardTitle>{newsletter.name}</CardTitle>
-                      <div className="px-2 py-1 rounded-full text-xs bg-green-100 text-green-800">Actif</div>
-                    </div>
-                    <CardDescription>Sujet: {newsletter.subject}</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      <div>
-                        <p className="text-sm font-medium">Dernier envoi</p>
-                        <p className="text-sm text-muted-foreground">
-                          {newsletter.lastSent ? new Date(newsletter.lastSent).toLocaleDateString() : "Jamais envoyé"}
-                        </p>
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium">Prochain envoi</p>
-                        <p className="text-sm text-muted-foreground">
-                          {newsletter.nextSend ? new Date(newsletter.nextSend).toLocaleDateString() : "Non planifié"}
-                        </p>
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium">Audience</p>
-                        <p className="text-sm text-muted-foreground">{newsletter.stats.sent} destinataires</p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            {newsletters.filter((n) => n.status === "actif").length === 0 && (
-              <Card>
-                <CardContent className="py-6 text-center">
-                  <p className="text-muted-foreground">Aucune newsletter active</p>
-                </CardContent>
-              </Card>
+      <TabsContent value="liste" className="space-y-4">
+        <FilterBar
+          onDateChange={handleDateChange}
+          onSiteChange={handleSiteChange}
+          onReset={handleResetFilters}
+          dateValue={dateRange}
+          siteValue={selectedSite}
+          showDateFilter={true}
+        />
+        <Card>
+          <CardHeader className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+            <div>
+              <CardTitle>Newsletters</CardTitle>
+              <CardDescription>Gérez vos campagnes de newsletters</CardDescription>
+            </div>
+            <Button variant="outline" size="sm" onClick={() => setActiveTab("detail")}>
+              <Info className="mr-2 h-4 w-4" /> Détail
+            </Button>
+          </CardHeader>
+          <CardContent>
+            {filteredNewsletters.length === 0 ? (
+              <div className="text-center py-6">
+                <p className="text-muted-foreground mb-4">Aucune newsletter ne correspond aux critères de filtrage.</p>
+                <Button variant="outline" onClick={handleResetFilters}>
+                  Réinitialiser les filtres
+                </Button>
+              </div>
+            ) : (
+              <DataTable
+                columns={columnsWithActions}
+                data={filteredNewsletters}
+                searchKey="name"
+                searchPlaceholder="Rechercher une newsletter..."
+              />
             )}
-          </TabsContent>
+          </CardContent>
+        </Card>
+      </TabsContent>
 
-          <TabsContent value="brouillons" className="space-y-4">
-            {newsletters
-              .filter((n) => n.status === "brouillon")
-              .map((newsletter) => (
-                <Card
-                  key={newsletter.id}
-                  className="cursor-pointer hover:bg-muted/50 transition-colors"
-                  onClick={() => handleEditNewsletter(newsletter)}
-                >
-                  <CardHeader className="pb-2">
-                    <div className="flex items-center justify-between">
-                      <CardTitle>{newsletter.name}</CardTitle>
-                      <div className="px-2 py-1 rounded-full text-xs bg-yellow-100 text-yellow-800">Brouillon</div>
-                    </div>
-                    <CardDescription>Sujet: {newsletter.subject}</CardDescription>
+      <TabsContent value="creation">
+        <div className="mb-4">
+          <Button variant="outline" onClick={() => setActiveTab("liste")}>
+            <ArrowLeft className="mr-2 h-4 w-4" /> Retour à la liste
+          </Button>
+        </div>
+        <NewsletterForm
+          newsletter={editingNewsletter}
+          onCancel={() => setActiveTab("liste")}
+          onSave={handleSubmitNewsletter}
+        />
+      </TabsContent>
+
+      <TabsContent value="statistiques">
+        <NewsletterStats newsletters={newsletters} />
+      </TabsContent>
+
+      <TabsContent value="detail" className="space-y-4">
+        <div className="mb-4">
+          <Button variant="outline" onClick={() => {
+            setActiveTab("liste")
+            setSelectedNewsletterForDetail(null)
+          }}>
+            <ArrowLeft className="mr-2 h-4 w-4" /> Retour à la liste
+          </Button>
+        </div>
+        <Card>
+          <CardHeader>
+            <CardTitle>
+              {selectedNewsletterForDetail
+                ? `Détails de la newsletter : ${selectedNewsletterForDetail.name}`
+                : "Comprendre les newsletters"}
+            </CardTitle>
+            <CardDescription>
+              {selectedNewsletterForDetail
+                ? `Informations détaillées sur la newsletter pour le site ${selectedNewsletterForDetail.siteId}`
+                : "Explication détaillée du fonctionnement des newsletters"}
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {selectedNewsletterForDetail ? (
+              <div className="space-y-6">
+                <Card className="border shadow-sm">
+                  <CardHeader className="bg-muted/50 pb-3">
+                    <CardTitle className="text-base font-medium">Informations de base</CardTitle>
                   </CardHeader>
-                  <CardContent>
+                  <CardContent className="pt-4">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
-                        <p className="text-sm font-medium">Créé le</p>
-                        <p className="text-sm text-muted-foreground">
-                          {new Date(newsletter.createdAt).toLocaleDateString()}
-                        </p>
+                        <p className="text-sm text-muted-foreground">Nom</p>
+                        <p className="font-medium">{selectedNewsletterForDetail.name}</p>
                       </div>
                       <div>
-                        <p className="text-sm font-medium">Template</p>
-                        <p className="text-sm text-muted-foreground">
-                          {newsletter.template === "simple"
-                            ? "Simple"
-                            : newsletter.template === "promotionnel"
-                              ? "Promotionnel"
-                              : "Informatif"}
-                        </p>
+                        <p className="text-sm text-muted-foreground">Site</p>
+                        <p className="font-medium">{selectedNewsletterForDetail.siteId}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-muted-foreground">Date de création</p>
+                        <p className="font-medium">{new Date(selectedNewsletterForDetail.createdAt).toLocaleDateString("fr-FR")}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-muted-foreground">Statut</p>
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                          selectedNewsletterForDetail.status === "actif"
+                            ? "bg-green-100 text-green-800"
+                            : selectedNewsletterForDetail.status === "brouillon"
+                            ? "bg-yellow-100 text-yellow-800"
+                            : "bg-gray-100 text-gray-800"
+                        }`}>
+                          {selectedNewsletterForDetail.status.charAt(0).toUpperCase() + selectedNewsletterForDetail.status.slice(1)}
+                        </span>
                       </div>
                     </div>
                   </CardContent>
                 </Card>
-              ))}
-            {newsletters.filter((n) => n.status === "brouillon").length === 0 && (
-              <Card>
-                <CardContent className="py-6 text-center">
-                  <p className="text-muted-foreground">Aucun brouillon</p>
-                </CardContent>
-              </Card>
-            )}
-          </TabsContent>
 
-          <TabsContent value="inactives" className="space-y-4">
-            {newsletters
-              .filter((n) => n.status === "inactif")
-              .map((newsletter) => (
-                <Card
-                  key={newsletter.id}
-                  className="cursor-pointer hover:bg-muted/50 transition-colors"
-                  onClick={() => handleEditNewsletter(newsletter)}
-                >
-                  <CardHeader className="pb-2">
-                    <div className="flex items-center justify-between">
-                      <CardTitle>{newsletter.name}</CardTitle>
-                      <div className="px-2 py-1 rounded-full text-xs bg-gray-100 text-gray-800">Inactif</div>
-                    </div>
-                    <CardDescription>Sujet: {newsletter.subject}</CardDescription>
+                <Card className="border shadow-sm">
+                  <CardHeader className="bg-muted/50 pb-3">
+                    <CardTitle className="text-base font-medium">Contenu de la newsletter</CardTitle>
                   </CardHeader>
-                  <CardContent>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <p className="text-sm font-medium">Dernier envoi</p>
-                        <p className="text-sm text-muted-foreground">
-                          {newsletter.lastSent ? new Date(newsletter.lastSent).toLocaleDateString() : "Jamais envoyé"}
-                        </p>
+                  <CardContent className="pt-4 space-y-4">
+                    <div className="mb-2">
+                      <p className="text-sm text-muted-foreground">Objet</p>
+                      <p className="font-medium">{selectedNewsletterForDetail.subject}</p>
+                    </div>
+                    <div className="mb-2">
+                      <p className="text-sm text-muted-foreground">Pré-en-tête</p>
+                      <p className="font-medium">{selectedNewsletterForDetail.preheader}</p>
+                    </div>
+                    <div className="mb-2">
+                      <p className="text-sm text-muted-foreground">Template</p>
+                      <p className="font-medium">{selectedNewsletterForDetail.template}</p>
+                    </div>
+                    <div className="mb-2">
+                      <p className="text-sm text-muted-foreground">Contenu</p>
+                      <div className="prose prose-sm max-w-none border rounded p-3 bg-white" dangerouslySetInnerHTML={{ __html: selectedNewsletterForDetail.content }} />
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className="border shadow-sm">
+                  <CardHeader className="bg-muted/50 pb-3">
+                    <CardTitle className="text-base font-medium">Critères d'inscription</CardTitle>
+                  </CardHeader>
+                  <CardContent className="pt-4">
+                    <div className="p-4 bg-muted/20 rounded-md">
+                      <p>
+                        <span className="font-medium">Catégories :</span> {selectedNewsletterForDetail.criteria.categories.join(", ") || "Aucune"}
+                      </p>
+                      <p>
+                        <span className="font-medium">Centres d'intérêt :</span> {selectedNewsletterForDetail.criteria.interests.join(", ") || "Aucun"}
+                      </p>
+                      <p>
+                        <span className="font-medium">Dernière commande :</span> {selectedNewsletterForDetail.criteria.lastPurchase ? `${selectedNewsletterForDetail.criteria.lastPurchase} jours` : "Tous les clients"}
+                      </p>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className="border shadow-sm">
+                  <CardHeader className="bg-muted/50 pb-3">
+                    <CardTitle className="text-base font-medium">Statistiques</CardTitle>
+                  </CardHeader>
+                  <CardContent className="pt-4">
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                      <div className="bg-muted/20 p-4 rounded-lg">
+                        <p className="text-sm text-muted-foreground">Envoyés</p>
+                        <p className="text-2xl font-bold">{selectedNewsletterForDetail.stats.sent}</p>
                       </div>
-                      <div>
-                        <p className="text-sm font-medium">Statistiques</p>
-                        <p className="text-sm text-muted-foreground">
-                          {newsletter.stats.opened} ouvertures / {newsletter.stats.clicked} clics
-                        </p>
+                      <div className="bg-muted/20 p-4 rounded-lg">
+                        <p className="text-sm text-muted-foreground">Ouverts</p>
+                        <p className="text-2xl font-bold">{selectedNewsletterForDetail.stats.opened}</p>
+                      </div>
+                      <div className="bg-muted/20 p-4 rounded-lg">
+                        <p className="text-sm text-muted-foreground">Cliqués</p>
+                        <p className="text-2xl font-bold">{selectedNewsletterForDetail.stats.clicked}</p>
+                      </div>
+                      <div className="bg-muted/20 p-4 rounded-lg">
+                        <p className="text-sm text-muted-foreground">Désabonnements</p>
+                        <p className="text-2xl font-bold">{selectedNewsletterForDetail.stats.unsubscribed}</p>
                       </div>
                     </div>
                   </CardContent>
                 </Card>
-              ))}
-            {newsletters.filter((n) => n.status === "inactif").length === 0 && (
-              <Card>
-                <CardContent className="py-6 text-center">
-                  <p className="text-muted-foreground">Aucune newsletter inactive</p>
-                </CardContent>
-              </Card>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <h3 className="text-lg font-medium">Qu'est-ce qu'une newsletter ?</h3>
+                <p>
+                  Une newsletter est un email envoyé régulièrement à vos clients pour les informer de vos nouveautés, promotions ou actualités. Elle permet de fidéliser votre audience et de générer du trafic vers votre site.
+                </p>
+                <h3 className="text-lg font-medium">Structure d'une newsletter</h3>
+                <div className="space-y-2 border rounded-md p-4 bg-gray-50">
+                  <p>Chaque newsletter est composée des éléments suivants :</p>
+                  <ul className="list-disc pl-6 space-y-2">
+                    <li><strong>Objet</strong> : Le sujet de l'email</li>
+                    <li><strong>Pré-en-tête</strong> : Le texte d'aperçu visible dans la boîte de réception</li>
+                    <li><strong>Contenu</strong> : Le corps de l'email, souvent en HTML</li>
+                    <li><strong>Template</strong> : Le modèle graphique utilisé</li>
+                    <li><strong>Critères d'inscription</strong> : Les filtres pour cibler l'audience</li>
+                  </ul>
+                </div>
+                <h3 className="text-lg font-medium">Statistiques</h3>
+                <p>Pour chaque newsletter, vous pouvez consulter des statistiques détaillées :</p>
+                <ul className="list-disc pl-6 space-y-2">
+                  <li>Nombre d'emails envoyés</li>
+                  <li>Nombre d'ouvertures</li>
+                  <li>Nombre de clics</li>
+                  <li>Nombre de désabonnements</li>
+                </ul>
+              </div>
             )}
-          </TabsContent>
-
-          <TabsContent value="statistiques">
-            <NewsletterStats newsletters={newsletters} />
-          </TabsContent>
-        </Tabs>
-      )}
-    </div>
+          </CardContent>
+        </Card>
+      </TabsContent>
+    </Tabs>
   )
 }

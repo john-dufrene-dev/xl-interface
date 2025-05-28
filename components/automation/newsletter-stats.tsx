@@ -5,7 +5,7 @@ import type { Newsletter } from "./newsletter"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { BarChart, LineChart, PieChart } from "lucide-react"
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell, Legend } from 'recharts'
 
 interface NewsletterStatsProps {
   newsletters: Newsletter[]
@@ -60,37 +60,32 @@ export default function NewsletterStats({ newsletters }: NewsletterStatsProps) {
 
   const chartData = getChartData()
 
-  // Fonction pour rendre le graphique en fonction du type sélectionné
-  const renderChart = () => {
-    const chartHeight = 300
-    const chartWidth = "100%"
+  // Données pour le BarChart d'engagement
+  const engagementData = chartData.labels.map((label, i) => ({
+    label,
+    Envoyés: chartData.sentData[i],
+    Ouverts: chartData.openedData[i],
+    Cliqués: chartData.clickedData[i],
+  }))
 
-    // Simuler différents types de graphiques avec des images
-    let chartQuery = ""
-    if (chartType === "bar") {
-      chartQuery = "bar chart email statistics"
-    } else if (chartType === "line") {
-      chartQuery = "line chart email statistics"
-    } else {
-      chartQuery = "pie chart email statistics"
-    }
+  // Données pour le PieChart des templates
+  const templateStats = newsletters.reduce((acc, n) => {
+    acc[n.template] = (acc[n.template] || 0) + n.stats.opened
+    return acc
+  }, {} as Record<string, number>)
+  const templatePieData = Object.entries(templateStats).map(([key, value]) => ({
+    name: key.charAt(0).toUpperCase() + key.slice(1),
+    value,
+  }))
+  const templateColors = ["#3b82f6", "#f59e42", "#10b981"]
 
-    return (
-      <div className="relative">
-        <img
-          src={`/placeholder.svg?height=${chartHeight}&width=800&query=${chartQuery}`}
-          alt={`${chartType} chart`}
-          className="w-full h-[300px] object-cover rounded-md border"
-        />
-        <div className="absolute inset-0 flex items-center justify-center">
-          <div className="text-sm text-muted-foreground bg-white/80 px-3 py-1 rounded-full">
-            Graphique {chartType === "bar" ? "à barres" : chartType === "line" ? "linéaire" : "circulaire"} des
-            statistiques
-          </div>
-        </div>
-      </div>
-    )
-  }
+  // Données pour le BarChart audience (catégories)
+  const categoryStats = [
+    { name: "Vêtements", value: 42 },
+    { name: "Électronique", value: 28 },
+    { name: "Maison & Déco", value: 18 },
+    { name: "Autres", value: 12 },
+  ]
 
   return (
     <div className="space-y-6">
@@ -182,7 +177,17 @@ export default function NewsletterStats({ newsletters }: NewsletterStatsProps) {
             </TabsList>
 
             <TabsContent value="engagement">
-              {renderChart()}
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={engagementData} margin={{ top: 16, right: 24, left: 0, bottom: 0 }}>
+                  <XAxis dataKey="label" fontSize={12} tickLine={false} axisLine={false} />
+                  <YAxis fontSize={12} tickLine={false} axisLine={false} />
+                  <Tooltip />
+                  <Legend />
+                  <Bar dataKey="Envoyés" fill="#3b82f6" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="Ouverts" fill="#10b981" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="Cliqués" fill="#f59e42" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
               <div className="mt-4 grid grid-cols-3 gap-4 text-center">
                 <div>
                   <div className="text-sm font-medium">Envoyés</div>
@@ -206,40 +211,45 @@ export default function NewsletterStats({ newsletters }: NewsletterStatsProps) {
             </TabsContent>
 
             <TabsContent value="templates">
-              <div className="flex justify-center items-center h-[300px]">
-                <img
-                  src="/placeholder.svg?height=300&width=800&query=pie chart email templates performance"
-                  alt="Performance par template"
-                  className="max-h-full rounded-md border"
-                />
-              </div>
+              <ResponsiveContainer width="100%" height={300}>
+                <PieChart>
+                  <Pie
+                    data={templatePieData}
+                    dataKey="value"
+                    nameKey="name"
+                    cx="50%"
+                    cy="50%"
+                    outerRadius={100}
+                    label
+                  >
+                    {templatePieData.map((entry, idx) => (
+                      <Cell key={`cell-${idx}`} fill={templateColors[idx % templateColors.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip />
+                  <Legend />
+                </PieChart>
+              </ResponsiveContainer>
               <div className="mt-4 grid grid-cols-3 gap-4 text-center">
-                <div>
-                  <div className="text-sm font-medium">Simple</div>
-                  <div className="text-lg font-bold">32.5%</div>
-                  <div className="text-xs text-muted-foreground">Taux d'ouverture</div>
-                </div>
-                <div>
-                  <div className="text-sm font-medium">Promotionnel</div>
-                  <div className="text-lg font-bold">45.8%</div>
-                  <div className="text-xs text-muted-foreground">Taux d'ouverture</div>
-                </div>
-                <div>
-                  <div className="text-sm font-medium">Informatif</div>
-                  <div className="text-lg font-bold">38.2%</div>
-                  <div className="text-xs text-muted-foreground">Taux d'ouverture</div>
-                </div>
+                {templatePieData.map((d, i) => (
+                  <div key={d.name}>
+                    <div className="text-sm font-medium">{d.name}</div>
+                    <div className="text-lg font-bold" style={{ color: templateColors[i % templateColors.length] }}>{d.value}</div>
+                    <div className="text-xs text-muted-foreground">Ouverts</div>
+                  </div>
+                ))}
               </div>
             </TabsContent>
 
             <TabsContent value="audience">
-              <div className="flex justify-center items-center h-[300px]">
-                <img
-                  src="/placeholder.svg?height=300&width=800&query=bar chart email audience demographics"
-                  alt="Démographie de l'audience"
-                  className="max-h-full rounded-md border"
-                />
-              </div>
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={categoryStats} margin={{ top: 16, right: 24, left: 0, bottom: 0 }}>
+                  <XAxis dataKey="name" fontSize={12} tickLine={false} axisLine={false} />
+                  <YAxis fontSize={12} tickLine={false} axisLine={false} />
+                  <Tooltip />
+                  <Bar dataKey="value" fill="#6366f1" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
               <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
                 <Card>
                   <CardHeader className="pb-2">
@@ -247,22 +257,12 @@ export default function NewsletterStats({ newsletters }: NewsletterStatsProps) {
                   </CardHeader>
                   <CardContent className="text-sm">
                     <ul className="space-y-1">
-                      <li className="flex justify-between">
-                        <span>Vêtements</span>
-                        <span className="font-medium">42%</span>
-                      </li>
-                      <li className="flex justify-between">
-                        <span>Électronique</span>
-                        <span className="font-medium">28%</span>
-                      </li>
-                      <li className="flex justify-between">
-                        <span>Maison & Déco</span>
-                        <span className="font-medium">18%</span>
-                      </li>
-                      <li className="flex justify-between">
-                        <span>Autres</span>
-                        <span className="font-medium">12%</span>
-                      </li>
+                      {categoryStats.map((cat) => (
+                        <li key={cat.name} className="flex justify-between">
+                          <span>{cat.name}</span>
+                          <span className="font-medium">{cat.value}%</span>
+                        </li>
+                      ))}
                     </ul>
                   </CardContent>
                 </Card>

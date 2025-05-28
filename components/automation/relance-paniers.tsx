@@ -124,14 +124,10 @@ const scenariosExempleInitial: Scenario[] = [
     utmSource: "email",
     utmMedium: "banner",
     utmCampaign: "cart_recovery",
-    utmTerm: "",
-    utmContent: "banner_image",
     buttonLink: "https://www.siteprincipal.com/panier",
     buttonUtmSource: "email",
     buttonUtmMedium: "button",
     buttonUtmCampaign: "cart_recovery",
-    utmTerm: "",
-    utmContent: "cta_button",
     texteButton: "Retourner à mon panier",
     criteres: {
       delaiCreation: 1,
@@ -156,8 +152,6 @@ const scenariosExempleInitial: Scenario[] = [
         utmSource: "email",
         utmMedium: "banner",
         utmCampaign: "cart_recovery_step1",
-        utmTerm: "",
-        utmContent: "banner_step1",
         buttonLink: "https://www.siteprincipal.com/panier",
         buttonUtmSource: "email",
         buttonUtmMedium: "button",
@@ -183,13 +177,11 @@ const scenariosExempleInitial: Scenario[] = [
         utmSource: "email",
         utmMedium: "banner",
         utmCampaign: "cart_recovery_step2",
-        utmTerm: "discount",
-        utmContent: "banner_step2",
         buttonLink: "https://www.siteprincipal.com/panier-promo",
         buttonUtmSource: "email",
         buttonUtmMedium: "button",
         buttonUtmCampaign: "cart_recovery_step2",
-        buttonUtmTerm: "discount",
+        buttonUtmTerm: "",
         buttonUtmContent: "cta_step2",
         texteButton: "Profiter de l'offre",
         bonReductionActif: true,
@@ -223,14 +215,10 @@ const scenariosExempleInitial: Scenario[] = [
     utmSource: "email",
     utmMedium: "banner",
     utmCampaign: "cart_recovery",
-    utmTerm: "",
-    utmContent: "banner_image",
     buttonLink: "https://www.sitesecondaire.com/panier",
     buttonUtmSource: "email",
     buttonUtmMedium: "button",
     buttonUtmCampaign: "cart_recovery",
-    buttonUtmTerm: "",
-    utmContent: "cta_button",
     texteButton: "Finaliser ma commande",
     criteres: {
       delaiCreation: 12,
@@ -255,8 +243,6 @@ const scenariosExempleInitial: Scenario[] = [
         utmSource: "email",
         utmMedium: "banner",
         utmCampaign: "cart_recovery_step1",
-        utmTerm: "",
-        utmContent: "banner_step1",
         buttonLink: "https://www.sitesecondaire.com/panier",
         buttonUtmSource: "email",
         buttonUtmMedium: "button",
@@ -282,13 +268,11 @@ const scenariosExempleInitial: Scenario[] = [
         utmSource: "email",
         utmMedium: "banner",
         utmCampaign: "cart_recovery_step2",
-        utmTerm: "discount",
-        utmContent: "banner_step2",
         buttonLink: "https://www.sitesecondaire.com/offre",
         buttonUtmSource: "email",
         buttonUtmMedium: "button",
         buttonUtmCampaign: "cart_recovery_step2",
-        buttonUtmTerm: "discount",
+        buttonUtmTerm: "",
         buttonUtmContent: "cta_step2",
         texteButton: "Profiter de l'offre",
         bonReductionActif: true,
@@ -312,13 +296,11 @@ const scenariosExempleInitial: Scenario[] = [
         utmSource: "email",
         utmMedium: "banner",
         utmCampaign: "cart_recovery_step3",
-        utmTerm: "last_chance",
-        utmContent: "banner_step3",
         buttonLink: "https://www.sitesecondaire.com/derniere-chance",
         buttonUtmSource: "email",
         buttonUtmMedium: "button",
         buttonUtmCampaign: "cart_recovery_step3",
-        buttonUtmTerm: "last_chance",
+        buttonUtmTerm: "",
         buttonUtmContent: "cta_step3",
         texteButton: "Finaliser avec 10% de réduction",
         bonReductionActif: true,
@@ -352,13 +334,10 @@ const scenariosExempleInitial: Scenario[] = [
     utmSource: "email",
     utmMedium: "banner",
     utmCampaign: "cart_recovery",
-    utmTerm: "flash_sale",
-    utmContent: "banner_image",
     buttonLink: "https://www.siteecommerce.com/panier-flash",
     buttonUtmSource: "email",
     buttonUtmMedium: "button",
     buttonUtmCampaign: "cart_recovery",
-    buttonUtmTerm: "flash_sale",
     buttonUtmContent: "cta_button",
     texteButton: "Profiter de l'offre flash",
     criteres: {
@@ -384,13 +363,11 @@ const scenariosExempleInitial: Scenario[] = [
         utmSource: "email",
         utmMedium: "banner",
         utmCampaign: "cart_recovery_step1",
-        utmTerm: "flash_sale",
-        utmContent: "banner_step1",
         buttonLink: "https://www.siteecommerce.com/panier-flash",
         buttonUtmSource: "email",
         buttonUtmMedium: "button",
         buttonUtmCampaign: "cart_recovery_step1",
-        buttonUtmTerm: "flash_sale",
+        buttonUtmTerm: "",
         buttonUtmContent: "cta_step1",
         texteButton: "Commander maintenant",
         bonReductionActif: true,
@@ -611,14 +588,10 @@ export default function RelancePaniers() {
       utmSource: scenario.utmSource,
       utmMedium: scenario.utmMedium,
       utmCampaign: scenario.utmCampaign,
-      utmTerm: scenario.utmTerm,
-      utmContent: scenario.utmContent,
       buttonLink: scenario.buttonLink,
       buttonUtmSource: scenario.buttonUtmSource,
       buttonUtmMedium: scenario.buttonUtmMedium,
       buttonUtmCampaign: scenario.buttonUtmCampaign,
-      buttonUtmTerm: scenario.buttonUtmTerm,
-      buttonUtmContent: scenario.buttonUtmContent,
       contenuHaut: scenario.contenuMailHaut,
       contenuBas: scenario.contenuMailBas,
       texteButton: scenario.texteButton,
@@ -637,14 +610,10 @@ export default function RelancePaniers() {
       utmSource: step.utmSource,
       utmMedium: step.utmMedium,
       utmCampaign: step.utmCampaign,
-      utmTerm: step.utmTerm,
-      utmContent: step.utmContent,
       buttonLink: step.buttonLink,
       buttonUtmSource: step.buttonUtmSource,
       buttonUtmMedium: step.buttonUtmMedium,
       buttonUtmCampaign: step.buttonUtmCampaign,
-      buttonUtmTerm: step.buttonUtmTerm,
-      buttonUtmContent: step.buttonUtmContent,
       contenuHaut: step.contenuHaut || step.contenu,
       contenuBas: step.contenuBas,
       texteButton: step.texteButton,
@@ -917,9 +886,7 @@ export default function RelancePaniers() {
                         )}
                         {(selectedScenarioForDetail.utmSource ||
                           selectedScenarioForDetail.utmMedium ||
-                          selectedScenarioForDetail.utmCampaign ||
-                          selectedScenarioForDetail.utmTerm ||
-                          selectedScenarioForDetail.utmContent) && (
+                          selectedScenarioForDetail.utmCampaign) && (
                           <div>
                             <p className="text-sm text-muted-foreground">Paramètres UTM de la bannière</p>
                             <div className="grid grid-cols-2 gap-2 mt-1 text-sm">
@@ -938,24 +905,12 @@ export default function RelancePaniers() {
                                   <span className="font-medium">Campaign:</span> {selectedScenarioForDetail.utmCampaign}
                                 </div>
                               )}
-                              {selectedScenarioForDetail.utmTerm && (
-                                <div>
-                                  <span className="font-medium">Term:</span> {selectedScenarioForDetail.utmTerm}
-                                </div>
-                              )}
-                              {selectedScenarioForDetail.utmContent && (
-                                <div>
-                                  <span className="font-medium">Content:</span> {selectedScenarioForDetail.utmContent}
-                                </div>
-                              )}
                             </div>
                           </div>
                         )}
                         {(selectedScenarioForDetail.buttonUtmSource ||
                           selectedScenarioForDetail.buttonUtmMedium ||
-                          selectedScenarioForDetail.buttonUtmCampaign ||
-                          selectedScenarioForDetail.buttonUtmTerm ||
-                          selectedScenarioForDetail.buttonUtmContent) && (
+                          selectedScenarioForDetail.buttonUtmCampaign) && (
                           <div>
                             <p className="text-sm text-muted-foreground">Paramètres UTM du bouton</p>
                             <div className="grid grid-cols-2 gap-2 mt-1 text-sm">
@@ -975,17 +930,6 @@ export default function RelancePaniers() {
                                 <div>
                                   <span className="font-medium">Campaign:</span>{" "}
                                   {selectedScenarioForDetail.buttonUtmCampaign}
-                                </div>
-                              )}
-                              {selectedScenarioForDetail.buttonUtmTerm && (
-                                <div>
-                                  <span className="font-medium">Term:</span> {selectedScenarioForDetail.buttonUtmTerm}
-                                </div>
-                              )}
-                              {selectedScenarioForDetail.buttonUtmContent && (
-                                <div>
-                                  <span className="font-medium">Content:</span>{" "}
-                                  {selectedScenarioForDetail.buttonUtmContent}
                                 </div>
                               )}
                             </div>
@@ -1030,8 +974,7 @@ export default function RelancePaniers() {
                             <div className="mt-2">
                               <p>
                                 <span className="font-medium">Réduction: </span>
-                                {selectedScenarioForDetail.criteres.montantReduction}{" "}
-                                {selectedScenarioForDetail.criteres.typeReduction === "pourcentage" ? "%" : "€"}
+                                {selectedScenarioForDetail.criteres.montantReduction} {selectedScenarioForDetail.criteres.typeReduction === "pourcentage" ? "%" : "€"}
                               </p>
                             </div>
                           )}
@@ -1156,9 +1099,7 @@ export default function RelancePaniers() {
                             )}
                             {(etape.utmSource ||
                               etape.utmMedium ||
-                              etape.utmCampaign ||
-                              etape.utmTerm ||
-                              etape.utmContent) && (
+                              etape.utmCampaign) && (
                               <div>
                                 <p className="text-sm text-muted-foreground">Paramètres UTM de la bannière</p>
                                 <div className="grid grid-cols-2 gap-2 mt-1 text-sm">
@@ -1177,24 +1118,12 @@ export default function RelancePaniers() {
                                       <span className="font-medium">Campaign:</span> {etape.utmCampaign}
                                     </div>
                                   )}
-                                  {etape.utmTerm && (
-                                    <div>
-                                      <span className="font-medium">Term:</span> {etape.utmTerm}
-                                    </div>
-                                  )}
-                                  {etape.utmContent && (
-                                    <div>
-                                      <span className="font-medium">Content:</span> {etape.utmContent}
-                                    </div>
-                                  )}
                                 </div>
                               </div>
                             )}
                             {(etape.buttonUtmSource ||
                               etape.buttonUtmMedium ||
-                              etape.buttonUtmCampaign ||
-                              etape.buttonUtmTerm ||
-                              etape.buttonUtmContent) && (
+                              etape.buttonUtmCampaign) && (
                               <div>
                                 <p className="text-sm text-muted-foreground">Paramètres UTM du bouton</p>
                                 <div className="grid grid-cols-2 gap-2 mt-1 text-sm">
@@ -1211,16 +1140,6 @@ export default function RelancePaniers() {
                                   {etape.buttonUtmCampaign && (
                                     <div>
                                       <span className="font-medium">Campaign:</span> {etape.buttonUtmCampaign}
-                                    </div>
-                                  )}
-                                  {etape.buttonUtmTerm && (
-                                    <div>
-                                      <span className="font-medium">Term:</span> {etape.buttonUtmTerm}
-                                    </div>
-                                  )}
-                                  {etape.buttonUtmContent && (
-                                    <div>
-                                      <span className="font-medium">Content:</span> {etape.buttonUtmContent}
                                     </div>
                                   )}
                                 </div>

@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { SiteSelector } from "@/components/site-selector"
 import { Switch } from "@/components/ui/switch"
 import { MailPreview } from "@/components/automation/mail-preview"
+import { ReductionConfig } from "./reduction-config"
 
 // Modifier le type RelanceStep pour ajouter les UTMs spécifiques au bouton
 type RelanceStep = {
@@ -41,7 +42,7 @@ type RelanceStep = {
   texteButton?: string // Texte du bouton
   bonReductionActif?: boolean
   montantReduction?: number
-  typeReduction?: "pourcentage" | "montant"
+  typeReduction?: "pourcentage" | "euro"
   dureeValidite?: number
 }
 
@@ -72,7 +73,7 @@ type Scenario = {
   texteButton?: string
   bonReductionActif?: boolean
   montantReduction?: number
-  typeReduction?: "pourcentage" | "montant"
+  typeReduction?: "pourcentage" | "euro"
   dureeValidite?: number
   criteres: {
     delaiCreation: number
@@ -183,7 +184,6 @@ export function ScenarioForm({ scenario, onCancel, onSubmit }: ScenarioFormProps
       buttonUtmSource: "email",
       buttonUtmMedium: "button",
       buttonUtmCampaign: `cart_recovery_step${newStepIndex + 1}`,
-      utmTerm: "",
       buttonUtmContent: `cta_step${newStepIndex + 1}`,
       texteButton: "Voir mon panier",
       bonReductionActif: false,
@@ -312,11 +312,8 @@ export function ScenarioForm({ scenario, onCancel, onSubmit }: ScenarioFormProps
                   </Label>
                   <div className="flex-grow">
                     <SiteSelector
-                      id="siteId"
-                      value={formData.siteId || null}
+                      value={formData.siteId || ""}
                       onChange={(value) => setFormData({ ...formData, siteId: value || "" })}
-                      className="w-full h-10"
-                      required
                     />
                   </div>
                 </div>
@@ -688,80 +685,16 @@ export function ScenarioForm({ scenario, onCancel, onSubmit }: ScenarioFormProps
               <div className="pt-4 border-t mt-4">
                 <h3 className="text-lg font-medium mb-4">Configuration du bon de réduction</h3>
 
-                <div className="flex items-center space-x-2 mb-6">
-                  <Switch
-                    id="bonReductionActif"
-                    checked={formData.bonReductionActif || false}
-                    onCheckedChange={(checked) =>
-                      setFormData({
-                        ...formData,
-                        bonReductionActif: checked,
-                      })
-                    }
-                  />
-                  <Label htmlFor="bonReductionActif" className="text-base">
-                    Activer le bon de réduction
-                  </Label>
-                </div>
-
-                {formData.bonReductionActif && (
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pl-6 border-l-2 border-muted">
-                    <div className="space-y-2">
-                      <Label htmlFor="montantReduction">Montant de la réduction</Label>
-                      <Input
-                        id="montantReduction"
-                        type="number"
-                        min="1"
-                        value={formData.montantReduction || 10}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            montantReduction: Number.parseInt(e.target.value),
-                          })
-                        }
-                        className="w-full"
-                        required
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="typeReduction">Type de réduction</Label>
-                      <Select
-                        value={formData.typeReduction || "pourcentage"}
-                        onValueChange={(value: "pourcentage" | "montant") =>
-                          setFormData({
-                            ...formData,
-                            typeReduction: value,
-                          })
-                        }
-                      >
-                        <SelectTrigger className="w-full">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="pourcentage">Pourcentage (%)</SelectItem>
-                          <SelectItem value="montant">Montant (€)</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="dureeValidite">Durée de validité (jours)</Label>
-                      <Input
-                        id="dureeValidite"
-                        type="number"
-                        min="1"
-                        value={formData.dureeValidite || 7}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            dureeValidite: Number.parseInt(e.target.value),
-                          })
-                        }
-                        className="w-full"
-                        required
-                      />
-                    </div>
-                  </div>
-                )}
+                <ReductionConfig
+                  actif={formData.bonReductionActif || false}
+                  montant={formData.montantReduction || 10}
+                  type={formData.typeReduction || "pourcentage"}
+                  duree={formData.dureeValidite || 7}
+                  onActifChange={checked => setFormData({ ...formData, bonReductionActif: checked })}
+                  onMontantChange={val => setFormData({ ...formData, montantReduction: val })}
+                  onTypeChange={val => setFormData({ ...formData, typeReduction: val })}
+                  onDureeChange={val => setFormData({ ...formData, dureeValidite: val })}
+                />
               </div>
             </CardContent>
           </Card>
@@ -1119,66 +1052,16 @@ export function ScenarioForm({ scenario, onCancel, onSubmit }: ScenarioFormProps
                         <div className="pt-4 border-t mt-4">
                           <h3 className="text-lg font-medium mb-4">Configuration du bon de réduction</h3>
 
-                          <div className="flex items-center space-x-2 mb-6">
-                            <Switch
-                              id={`bonReductionActif-${step.id}`}
-                              checked={step.bonReductionActif || false}
-                              onCheckedChange={(checked) => updateStep(step.id, "bonReductionActif", checked)}
-                            />
-                            <Label htmlFor={`bonReductionActif-${step.id}`} className="text-base">
-                              Activer le bon de réduction
-                            </Label>
-                          </div>
-
-                          {step.bonReductionActif && (
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pl-6 border-l-2 border-muted">
-                              <div className="space-y-2">
-                                <Label htmlFor={`montantReduction-${step.id}`}>Montant de la réduction</Label>
-                                <Input
-                                  id={`montantReduction-${step.id}`}
-                                  type="number"
-                                  min="1"
-                                  value={step.montantReduction || 10}
-                                  onChange={(e) =>
-                                    updateStep(step.id, "montantReduction", Number.parseInt(e.target.value))
-                                  }
-                                  className="w-full"
-                                  required
-                                />
-                              </div>
-                              <div className="space-y-2">
-                                <Label htmlFor={`typeReduction-${step.id}`}>Type de réduction</Label>
-                                <Select
-                                  value={step.typeReduction || "pourcentage"}
-                                  onValueChange={(value: "pourcentage" | "montant") =>
-                                    updateStep(step.id, "typeReduction", value)
-                                  }
-                                >
-                                  <SelectTrigger className="w-full">
-                                    <SelectValue />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    <SelectItem value="pourcentage">Pourcentage (%)</SelectItem>
-                                    <SelectItem value="montant">Montant (€)</SelectItem>
-                                  </SelectContent>
-                                </Select>
-                              </div>
-                              <div className="space-y-2">
-                                <Label htmlFor={`dureeValidite-${step.id}`}>Durée de validité (jours)</Label>
-                                <Input
-                                  id={`dureeValidite-${step.id}`}
-                                  type="number"
-                                  min="1"
-                                  value={step.dureeValidite || 7}
-                                  onChange={(e) =>
-                                    updateStep(step.id, "dureeValidite", Number.parseInt(e.target.value))
-                                  }
-                                  className="w-full"
-                                  required
-                                />
-                              </div>
-                            </div>
-                          )}
+                          <ReductionConfig
+                            actif={step.bonReductionActif || false}
+                            montant={step.montantReduction || 10}
+                            type={step.typeReduction || "pourcentage"}
+                            duree={step.dureeValidite || 7}
+                            onActifChange={checked => updateStep(step.id, "bonReductionActif", checked)}
+                            onMontantChange={val => updateStep(step.id, "montantReduction", val)}
+                            onTypeChange={val => updateStep(step.id, "typeReduction", val)}
+                            onDureeChange={val => updateStep(step.id, "dureeValidite", val)}
+                          />
                         </div>
                       </CardContent>
                     </Card>
