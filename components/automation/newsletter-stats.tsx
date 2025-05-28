@@ -6,13 +6,19 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell, Legend } from 'recharts'
+import { DateRangePicker } from "@/components/date-range-picker"
+import { PeriodSelector } from "@/components/period-selector"
+import { Tabs as UITabs, TabsList as UITabsList, TabsTrigger as UITabsTrigger } from "@/components/ui/tabs"
+import type { DateRange } from "react-day-picker"
 
 interface NewsletterStatsProps {
   newsletters: Newsletter[]
 }
 
 export default function NewsletterStats({ newsletters }: NewsletterStatsProps) {
-  const [period, setPeriod] = useState<"7j" | "30j" | "90j" | "1an">("30j")
+  const [dateRange, setDateRange] = useState<DateRange | undefined>()
+  const [datePickerMode, setDatePickerMode] = useState<"period" | "custom">("period")
+  const [selectedPeriod, setSelectedPeriod] = useState<string>("last-30-days")
   const [chartType, setChartType] = useState<"bar" | "line" | "pie">("bar")
 
   // Calculer les statistiques globales
@@ -28,18 +34,18 @@ export default function NewsletterStats({ newsletters }: NewsletterStatsProps) {
   // Générer des données pour les graphiques
   const getChartData = () => {
     // Simuler des données pour différentes périodes
-    const dataPoints = period === "7j" ? 7 : period === "30j" ? 30 : period === "90j" ? 12 : 12
+    const dataPoints = selectedPeriod === "7j" ? 7 : selectedPeriod === "30j" ? 30 : selectedPeriod === "90j" ? 12 : 12
     const labels = []
     const sentData = []
     const openedData = []
     const clickedData = []
 
     for (let i = 0; i < dataPoints; i++) {
-      if (period === "7j") {
+      if (selectedPeriod === "7j") {
         labels.push(`Jour ${i + 1}`)
-      } else if (period === "30j") {
+      } else if (selectedPeriod === "30j") {
         labels.push(`Jour ${i + 1}`)
-      } else if (period === "90j") {
+      } else if (selectedPeriod === "90j") {
         labels.push(`Semaine ${i + 1}`)
       } else {
         labels.push(`Mois ${i + 1}`)
@@ -94,30 +100,24 @@ export default function NewsletterStats({ newsletters }: NewsletterStatsProps) {
           <h3 className="text-lg font-medium">Statistiques des newsletters</h3>
           <p className="text-sm text-muted-foreground">Analysez les performances de vos campagnes</p>
         </div>
-        <div className="flex flex-col sm:flex-row gap-2">
-          <Select value={period} onValueChange={(value: "7j" | "30j" | "90j" | "1an") => setPeriod(value)}>
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Période" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="7j">7 derniers jours</SelectItem>
-              <SelectItem value="30j">30 derniers jours</SelectItem>
-              <SelectItem value="90j">3 derniers mois</SelectItem>
-              <SelectItem value="1an">12 derniers mois</SelectItem>
-            </SelectContent>
-          </Select>
-
-          <div className="flex border rounded-md">
-            <button className={`p-2 ${chartType === "bar" ? "bg-muted" : ""}`} onClick={() => setChartType("bar")}>
-              <BarChart className="h-4 w-4" />
-            </button>
-            <button className={`p-2 ${chartType === "line" ? "bg-muted" : ""}`} onClick={() => setChartType("line")}>
-              <LineChart className="h-4 w-4" />
-            </button>
-            <button className={`p-2 ${chartType === "pie" ? "bg-muted" : ""}`} onClick={() => setChartType("pie")}>
-              <PieChart className="h-4 w-4" />
-            </button>
-          </div>
+        <div className="flex flex-col sm:flex-row gap-2 items-center">
+          <UITabs value={datePickerMode} onValueChange={(v) => setDatePickerMode(v as "period" | "custom") }>
+            <UITabsList className="h-9">
+              <UITabsTrigger value="period" className="text-xs px-2 py-1.5">Périodes prédéfinies</UITabsTrigger>
+              <UITabsTrigger value="custom" className="text-xs px-2 py-1.5">Période personnalisée</UITabsTrigger>
+            </UITabsList>
+          </UITabs>
+          {datePickerMode === "period" ? (
+            <PeriodSelector
+              value={selectedPeriod}
+              onChange={(range) => {
+                setDateRange(range)
+                setSelectedPeriod(selectedPeriod)
+              }}
+            />
+          ) : (
+            <DateRangePicker value={dateRange} onChange={setDateRange} />
+          )}
         </div>
       </div>
 
@@ -173,7 +173,6 @@ export default function NewsletterStats({ newsletters }: NewsletterStatsProps) {
             <TabsList className="mb-4">
               <TabsTrigger value="engagement">Engagement</TabsTrigger>
               <TabsTrigger value="templates">Par template</TabsTrigger>
-              <TabsTrigger value="audience">Audience</TabsTrigger>
             </TabsList>
 
             <TabsContent value="engagement">
@@ -242,55 +241,8 @@ export default function NewsletterStats({ newsletters }: NewsletterStatsProps) {
             </TabsContent>
 
             <TabsContent value="audience">
-              <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={categoryStats} margin={{ top: 16, right: 24, left: 0, bottom: 0 }}>
-                  <XAxis dataKey="name" fontSize={12} tickLine={false} axisLine={false} />
-                  <YAxis fontSize={12} tickLine={false} axisLine={false} />
-                  <Tooltip />
-                  <Bar dataKey="value" fill="#6366f1" radius={[4, 4, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-              <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-                <Card>
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-sm">Répartition par catégorie</CardTitle>
-                  </CardHeader>
-                  <CardContent className="text-sm">
-                    <ul className="space-y-1">
-                      {categoryStats.map((cat) => (
-                        <li key={cat.name} className="flex justify-between">
-                          <span>{cat.name}</span>
-                          <span className="font-medium">{cat.value}%</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-sm">Répartition par intérêt</CardTitle>
-                  </CardHeader>
-                  <CardContent className="text-sm">
-                    <ul className="space-y-1">
-                      <li className="flex justify-between">
-                        <span>Mode</span>
-                        <span className="font-medium">35%</span>
-                      </li>
-                      <li className="flex justify-between">
-                        <span>Technologie</span>
-                        <span className="font-medium">25%</span>
-                      </li>
-                      <li className="flex justify-between">
-                        <span>Cuisine</span>
-                        <span className="font-medium">20%</span>
-                      </li>
-                      <li className="flex justify-between">
-                        <span>Autres</span>
-                        <span className="font-medium">20%</span>
-                      </li>
-                    </ul>
-                  </CardContent>
-                </Card>
+              <div className="p-8 text-center text-muted-foreground text-lg">
+                L'audience de vos newsletters correspond à l'ensemble des utilisateurs inscrits à la newsletter.
               </div>
             </TabsContent>
           </Tabs>

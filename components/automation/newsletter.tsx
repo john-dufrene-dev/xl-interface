@@ -9,6 +9,8 @@ import { DataTable } from "@/components/data-table"
 import NewsletterForm from "./newsletter-form"
 import NewsletterStats from "./newsletter-stats"
 import { FilterBar } from "@/components/filter-bar"
+import type { DateRange } from "react-day-picker"
+import { MailPreview } from "@/components/automation/mail-preview"
 
 // Types
 export type NewsletterTemplate = "simple" | "promotionnel" | "informatif"
@@ -17,16 +19,36 @@ export interface Newsletter {
   id: string
   name: string
   siteId: string
-  status: "actif" | "inactif" | "brouillon"
   subject: string
   preheader: string
-  content: string
-  template: NewsletterTemplate
+  titreMail: string
+  texteApercu: string
+  imageUrl: string
+  bannerLink?: string
+  utmSource?: string
+  utmMedium?: string
+  utmCampaign?: string
+  utmTerm?: string
+  utmContent?: string
+  buttonLink?: string
+  buttonUtmSource?: string
+  buttonUtmMedium?: string
+  buttonUtmCampaign?: string
+  buttonUtmTerm?: string
+  buttonUtmContent?: string
+  texteButton: string
+  contenuMailHaut: string
+  contenuMailBas: string
   criteria: {
-    categories: string[]
-    interests: string[]
-    lastPurchase: number | null
+    subscribed: boolean
   }
+  reduction: {
+    actif: boolean
+    montant: number
+    type: "%" | "€"
+    duree: number
+  }
+  referenceNewsletterId?: string
   createdAt: string
   lastSent: string | null
   nextSend: string | null
@@ -36,6 +58,7 @@ export interface Newsletter {
     clicked: number
     unsubscribed: number
   }
+  actif: boolean
 }
 
 // Données d'exemple
@@ -43,17 +66,37 @@ const exampleNewsletters: Newsletter[] = [
   {
     id: "1",
     name: "Newsletter mensuelle",
-    siteId: "site1",
-    status: "actif",
+    siteId: "1",
     subject: "Découvrez nos nouveautés du mois",
     preheader: "Les dernières tendances et promotions exclusives",
-    content: "<p>Contenu de la newsletter mensuelle</p>",
-    template: "simple",
+    titreMail: "Découvrez nos nouveautés du mois",
+    texteApercu: "Les dernières tendances et promotions exclusives",
+    imageUrl: "https://placehold.co/600x200/4f46e5/ffffff?text=Banner+Site+Principal",
+    bannerLink: "https://example.com/banner-link",
+    utmSource: "newsletter",
+    utmMedium: "email",
+    utmCampaign: "janvier2023",
+    utmTerm: "newsletter",
+    utmContent: "newsletter-janvier2023",
+    buttonLink: "https://example.com/newsletter-janvier2023",
+    buttonUtmSource: "newsletter",
+    buttonUtmMedium: "email",
+    buttonUtmCampaign: "janvier2023",
+    buttonUtmTerm: "newsletter",
+    buttonUtmContent: "newsletter-janvier2023",
+    texteButton: "En savoir plus",
+    contenuMailHaut: "<p>Contenu de la newsletter mensuelle</p>",
+    contenuMailBas: "<p>Contenu de la newsletter mensuelle</p>",
     criteria: {
-      categories: ["vêtements", "accessoires"],
-      interests: ["mode", "tendances"],
-      lastPurchase: 90,
+      subscribed: true
     },
+    reduction: {
+      actif: true,
+      montant: 50,
+      type: "%",
+      duree: 30
+    },
+    referenceNewsletterId: "2",
     createdAt: "2023-01-15T10:00:00Z",
     lastSent: "2023-04-01T09:00:00Z",
     nextSend: "2023-05-01T09:00:00Z",
@@ -63,21 +106,42 @@ const exampleNewsletters: Newsletter[] = [
       clicked: 320,
       unsubscribed: 5,
     },
+    actif: true
   },
   {
     id: "2",
     name: "Promotions spéciales",
-    siteId: "site1",
-    status: "actif",
+    siteId: "2",
     subject: "Offres exclusives pour nos clients fidèles",
     preheader: "Jusqu'à 50% de réduction sur une sélection d'articles",
-    content: "<p>Contenu de la newsletter promotionnelle</p>",
-    template: "promotionnel",
+    titreMail: "Offres exclusives pour nos clients fidèles",
+    texteApercu: "Jusqu'à 50% de réduction sur une sélection d'articles",
+    imageUrl: "https://placehold.co/600x200/4f46e5/ffffff?text=Banner+Site+Principal",
+    bannerLink: "https://example.com/promotion-banner-link",
+    utmSource: "promotion",
+    utmMedium: "email",
+    utmCampaign: "fevrier2023",
+    utmTerm: "promotion",
+    utmContent: "promotion-fevrier2023",
+    buttonLink: "https://example.com/promotion-fevrier2023",
+    buttonUtmSource: "promotion",
+    buttonUtmMedium: "email",
+    buttonUtmCampaign: "fevrier2023",
+    buttonUtmTerm: "promotion",
+    buttonUtmContent: "promotion-fevrier2023",
+    texteButton: "En savoir plus",
+    contenuMailHaut: "<p>Contenu de la newsletter promotionnelle</p>",
+    contenuMailBas: "<p>Contenu de la newsletter promotionnelle</p>",
     criteria: {
-      categories: ["électronique", "informatique"],
-      interests: ["technologie", "gaming"],
-      lastPurchase: 30,
+      subscribed: true
     },
+    reduction: {
+      actif: true,
+      montant: 50,
+      type: "%",
+      duree: 30
+    },
+    referenceNewsletterId: "1",
     createdAt: "2023-02-20T14:30:00Z",
     lastSent: "2023-04-15T10:00:00Z",
     nextSend: "2023-05-15T10:00:00Z",
@@ -87,21 +151,42 @@ const exampleNewsletters: Newsletter[] = [
       clicked: 290,
       unsubscribed: 3,
     },
+    actif: true
   },
   {
     id: "3",
     name: "Actualités du secteur",
-    siteId: "site2",
-    status: "brouillon",
+    siteId: "3",
     subject: "Les dernières tendances du marché",
     preheader: "Restez informé des évolutions de votre secteur",
-    content: "<p>Contenu de la newsletter informative</p>",
-    template: "informatif",
+    titreMail: "Les dernières tendances du marché",
+    texteApercu: "Restez informé des évolutions de votre secteur",
+    imageUrl: "https://placehold.co/600x200/4f46e5/ffffff?text=Banner+Site+Principal",
+    bannerLink: "https://example.com/market-banner-link",
+    utmSource: "market",
+    utmMedium: "email",
+    utmCampaign: "mars2023",
+    utmTerm: "market",
+    utmContent: "market-mars2023",
+    buttonLink: "https://example.com/market-mars2023",
+    buttonUtmSource: "market",
+    buttonUtmMedium: "email",
+    buttonUtmCampaign: "mars2023",
+    buttonUtmTerm: "market",
+    buttonUtmContent: "market-mars2023",
+    texteButton: "En savoir plus",
+    contenuMailHaut: "<p>Contenu de la newsletter informative</p>",
+    contenuMailBas: "<p>Contenu de la newsletter informative</p>",
     criteria: {
-      categories: ["business", "finance"],
-      interests: ["économie", "investissement"],
-      lastPurchase: null,
+      subscribed: true
     },
+    reduction: {
+      actif: false,
+      montant: 0,
+      type: "%",
+      duree: 0
+    },
+    referenceNewsletterId: "1",
     createdAt: "2023-03-10T09:15:00Z",
     lastSent: null,
     nextSend: null,
@@ -111,6 +196,7 @@ const exampleNewsletters: Newsletter[] = [
       clicked: 0,
       unsubscribed: 0,
     },
+    actif: true
   },
 ]
 
@@ -127,24 +213,6 @@ const columns = [
     ),
   },
   {
-    id: "status",
-    accessorKey: "status",
-    header: "Statut",
-    cell: ({ row }: any) => (
-      <span
-        className={`px-2 py-1 rounded-full text-xs font-medium ${
-          row.original.status === "actif"
-            ? "bg-green-100 text-green-800"
-            : row.original.status === "brouillon"
-            ? "bg-yellow-100 text-yellow-800"
-            : "bg-gray-100 text-gray-800"
-        }`}
-      >
-        {row.original.status.charAt(0).toUpperCase() + row.original.status.slice(1)}
-      </span>
-    ),
-  },
-  {
     id: "createdAt",
     accessorKey: "createdAt",
     header: "Créée le",
@@ -153,8 +221,8 @@ const columns = [
   {
     id: "audience",
     header: "Audience",
-    cell: ({ row }: any) => (
-      <span>{row.original.stats.sent} destinataires</span>
+    cell: () => (
+      <span>Tous les inscrits à la newsletter</span>
     ),
   },
 ]
@@ -164,40 +232,31 @@ export default function NewsletterComponent() {
   const [newsletters, setNewsletters] = useState<Newsletter[]>(exampleNewsletters)
   const [filteredNewsletters, setFilteredNewsletters] = useState<Newsletter[]>(exampleNewsletters)
   const [selectedSite, setSelectedSite] = useState<string>("")
-  const [dateRange, setDateRange] = useState<{ from: Date; to: Date } | undefined>(undefined)
+  const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined)
   const [editingNewsletter, setEditingNewsletter] = useState<Newsletter | null>(null)
   const [selectedNewsletterForDetail, setSelectedNewsletterForDetail] = useState<Newsletter | null>(null)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [newsletterToDelete, setNewsletterToDelete] = useState<Newsletter | null>(null)
+  const [mailPreviewOpen, setMailPreviewOpen] = useState(false)
+  const [mailPreviewData, setMailPreviewData] = useState<any>(null)
 
   // Filtres
   useEffect(() => {
     let filtered = [...newsletters]
     
-    if (selectedSite) {
+    if (selectedSite && selectedSite !== "all") {
       filtered = filtered.filter(n => n.siteId === selectedSite)
     }
     
-    if (dateRange?.from && dateRange?.to) {
-      filtered = filtered.filter(n => {
-        const created = new Date(n.createdAt)
-        return created >= dateRange.from && created <= dateRange.to
-      })
-    }
-    
     setFilteredNewsletters(filtered)
-  }, [newsletters, selectedSite, dateRange])
+  }, [newsletters, selectedSite])
 
   const handleSiteChange = (site: string) => {
     setSelectedSite(site)
   }
 
-  const handleDateChange = (range: { from?: Date; to?: Date } | undefined) => {
-    if (range?.from && range?.to) {
-      setDateRange({ from: range.from, to: range.to })
-    } else {
-      setDateRange(undefined)
-    }
+  const handleDateChange = (range: DateRange | undefined) => {
+    setDateRange(range)
   }
 
   const handleResetFilters = () => {
@@ -262,9 +321,52 @@ export default function NewsletterComponent() {
   const columnsWithActions = [
     ...columns,
     {
+      id: "statut",
+      header: "Statut",
+      cell: ({ row }: any) => (
+        row.original.lastSent ? (
+          <span className="inline-block px-3 py-1 rounded-full bg-gray-100 text-gray-700 text-sm font-semibold">Envoyé</span>
+        ) : (
+          <span className="inline-block px-3 py-1 rounded-full bg-blue-100 text-blue-700 text-sm font-semibold">À envoyer</span>
+        )
+      ),
+    },
+    {
       id: "actions",
+      header: "",
       cell: ({ row }: any) => (
         <div className="flex items-center gap-2">
+          <Button
+            variant="ghost"
+            size="icon"
+            title="Visualiser"
+            onClick={() => {
+              setMailPreviewData({
+                titreMail: row.original.titreMail,
+                sujet: row.original.subject,
+                texteApercu: row.original.texteApercu,
+                imageUrl: row.original.imageUrl,
+                bannerLink: row.original.bannerLink,
+                utmSource: row.original.utmSource,
+                utmMedium: row.original.utmMedium,
+                utmCampaign: row.original.utmCampaign,
+                utmTerm: row.original.utmTerm,
+                utmContent: row.original.utmContent,
+                buttonLink: row.original.buttonLink,
+                buttonUtmSource: row.original.buttonUtmSource,
+                buttonUtmMedium: row.original.buttonUtmMedium,
+                buttonUtmCampaign: row.original.buttonUtmCampaign,
+                buttonUtmTerm: row.original.buttonUtmTerm,
+                buttonUtmContent: row.original.buttonUtmContent,
+                contenuHaut: row.original.contenuMailHaut,
+                contenuBas: row.original.contenuMailBas,
+                texteButton: row.original.texteButton,
+              })
+              setMailPreviewOpen(true)
+            }}
+          >
+            <Eye className="h-5 w-5" />
+          </Button>
           <Button variant="ghost" size="icon" title="Détail" onClick={() => handleViewNewsletterDetail(row.original)}>
             <Info className="h-4 w-4" />
           </Button>
@@ -302,9 +404,9 @@ export default function NewsletterComponent() {
           onDateChange={handleDateChange}
           onSiteChange={handleSiteChange}
           onReset={handleResetFilters}
-          dateValue={dateRange}
+          dateValue={undefined}
           siteValue={selectedSite}
-          showDateFilter={true}
+          showDateFilter={false}
         />
         <Card>
           <CardHeader className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
@@ -396,18 +498,6 @@ export default function NewsletterComponent() {
                         <p className="text-sm text-muted-foreground">Date de création</p>
                         <p className="font-medium">{new Date(selectedNewsletterForDetail.createdAt).toLocaleDateString("fr-FR")}</p>
                       </div>
-                      <div>
-                        <p className="text-sm text-muted-foreground">Statut</p>
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                          selectedNewsletterForDetail.status === "actif"
-                            ? "bg-green-100 text-green-800"
-                            : selectedNewsletterForDetail.status === "brouillon"
-                            ? "bg-yellow-100 text-yellow-800"
-                            : "bg-gray-100 text-gray-800"
-                        }`}>
-                          {selectedNewsletterForDetail.status.charAt(0).toUpperCase() + selectedNewsletterForDetail.status.slice(1)}
-                        </span>
-                      </div>
                     </div>
                   </CardContent>
                 </Card>
@@ -426,60 +516,106 @@ export default function NewsletterComponent() {
                       <p className="font-medium">{selectedNewsletterForDetail.preheader}</p>
                     </div>
                     <div className="mb-2">
-                      <p className="text-sm text-muted-foreground">Template</p>
-                      <p className="font-medium">{selectedNewsletterForDetail.template}</p>
+                      <p className="text-sm text-muted-foreground">Titre du mail</p>
+                      <p className="font-medium">{selectedNewsletterForDetail.titreMail}</p>
                     </div>
                     <div className="mb-2">
-                      <p className="text-sm text-muted-foreground">Contenu</p>
-                      <div className="prose prose-sm max-w-none border rounded p-3 bg-white" dangerouslySetInnerHTML={{ __html: selectedNewsletterForDetail.content }} />
+                      <p className="text-sm text-muted-foreground">Texte d'aperçu</p>
+                      <p className="font-medium">{selectedNewsletterForDetail.texteApercu}</p>
+                    </div>
+                    <div className="mb-2">
+                      <p className="text-sm text-muted-foreground">Image</p>
+                      <div className="mt-1 border rounded-md p-2 max-w-xs">
+                        <img src={selectedNewsletterForDetail.imageUrl} alt="Aperçu" className="max-w-full h-auto" />
+                      </div>
+                    </div>
+                    <div className="mb-2">
+                      <p className="text-sm text-muted-foreground">Lien de la bannière</p>
+                      <p className="font-medium break-all">{selectedNewsletterForDetail.bannerLink}</p>
+                    </div>
+                    <div className="mb-2">
+                      <p className="text-sm text-muted-foreground">Paramètres UTM</p>
+                      <ul className="text-xs text-muted-foreground pl-4 list-disc">
+                        <li>Source : {selectedNewsletterForDetail.utmSource}</li>
+                        <li>Medium : {selectedNewsletterForDetail.utmMedium}</li>
+                        <li>Campaign : {selectedNewsletterForDetail.utmCampaign}</li>
+                        <li>Term : {selectedNewsletterForDetail.utmTerm}</li>
+                        <li>Content : {selectedNewsletterForDetail.utmContent}</li>
+                      </ul>
+                    </div>
+                    <div className="mb-2">
+                      <p className="text-sm text-muted-foreground">Contenu du mail (partie haute)</p>
+                      <div className="prose prose-sm max-w-none border rounded p-3 bg-white" dangerouslySetInnerHTML={{ __html: selectedNewsletterForDetail.contenuMailHaut }} />
+                    </div>
+                    <div className="mb-2">
+                      <p className="text-sm text-muted-foreground">Contenu du mail (partie basse)</p>
+                      <div className="prose prose-sm max-w-none border rounded p-3 bg-white" dangerouslySetInnerHTML={{ __html: selectedNewsletterForDetail.contenuMailBas }} />
+                    </div>
+                    <div className="mb-2">
+                      <p className="text-sm text-muted-foreground">Texte du bouton</p>
+                      <p className="font-medium">{selectedNewsletterForDetail.texteButton}</p>
+                    </div>
+                    <div className="mb-2">
+                      <p className="text-sm text-muted-foreground">Lien du bouton</p>
+                      <p className="font-medium break-all">{selectedNewsletterForDetail.buttonLink}</p>
+                    </div>
+                    <div className="mb-2">
+                      <p className="text-sm text-muted-foreground">Paramètres UTM du bouton</p>
+                      <ul className="text-xs text-muted-foreground pl-4 list-disc">
+                        <li>Source : {selectedNewsletterForDetail.buttonUtmSource}</li>
+                        <li>Medium : {selectedNewsletterForDetail.buttonUtmMedium}</li>
+                        <li>Campaign : {selectedNewsletterForDetail.buttonUtmCampaign}</li>
+                        <li>Term : {selectedNewsletterForDetail.buttonUtmTerm}</li>
+                        <li>Content : {selectedNewsletterForDetail.buttonUtmContent}</li>
+                      </ul>
                     </div>
                   </CardContent>
                 </Card>
 
                 <Card className="border shadow-sm">
                   <CardHeader className="bg-muted/50 pb-3">
-                    <CardTitle className="text-base font-medium">Critères d'inscription</CardTitle>
+                    <CardTitle className="text-base font-medium">Audience</CardTitle>
                   </CardHeader>
                   <CardContent className="pt-4">
                     <div className="p-4 bg-muted/20 rounded-md">
                       <p>
-                        <span className="font-medium">Catégories :</span> {selectedNewsletterForDetail.criteria.categories.join(", ") || "Aucune"}
-                      </p>
-                      <p>
-                        <span className="font-medium">Centres d'intérêt :</span> {selectedNewsletterForDetail.criteria.interests.join(", ") || "Aucun"}
-                      </p>
-                      <p>
-                        <span className="font-medium">Dernière commande :</span> {selectedNewsletterForDetail.criteria.lastPurchase ? `${selectedNewsletterForDetail.criteria.lastPurchase} jours` : "Tous les clients"}
+                        <span className="font-medium">Tous les inscrits à la newsletter</span>
                       </p>
                     </div>
                   </CardContent>
                 </Card>
 
-                <Card className="border shadow-sm">
-                  <CardHeader className="bg-muted/50 pb-3">
-                    <CardTitle className="text-base font-medium">Statistiques</CardTitle>
-                  </CardHeader>
-                  <CardContent className="pt-4">
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                      <div className="bg-muted/20 p-4 rounded-lg">
-                        <p className="text-sm text-muted-foreground">Envoyés</p>
-                        <p className="text-2xl font-bold">{selectedNewsletterForDetail.stats.sent}</p>
-                      </div>
-                      <div className="bg-muted/20 p-4 rounded-lg">
-                        <p className="text-sm text-muted-foreground">Ouverts</p>
-                        <p className="text-2xl font-bold">{selectedNewsletterForDetail.stats.opened}</p>
-                      </div>
-                      <div className="bg-muted/20 p-4 rounded-lg">
-                        <p className="text-sm text-muted-foreground">Cliqués</p>
-                        <p className="text-2xl font-bold">{selectedNewsletterForDetail.stats.clicked}</p>
-                      </div>
-                      <div className="bg-muted/20 p-4 rounded-lg">
-                        <p className="text-sm text-muted-foreground">Désabonnements</p>
-                        <p className="text-2xl font-bold">{selectedNewsletterForDetail.stats.unsubscribed}</p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setMailPreviewData({
+                      titreMail: selectedNewsletterForDetail.titreMail,
+                      sujet: selectedNewsletterForDetail.subject,
+                      texteApercu: selectedNewsletterForDetail.texteApercu,
+                      imageUrl: selectedNewsletterForDetail.imageUrl,
+                      bannerLink: selectedNewsletterForDetail.bannerLink,
+                      utmSource: selectedNewsletterForDetail.utmSource,
+                      utmMedium: selectedNewsletterForDetail.utmMedium,
+                      utmCampaign: selectedNewsletterForDetail.utmCampaign,
+                      utmTerm: selectedNewsletterForDetail.utmTerm,
+                      utmContent: selectedNewsletterForDetail.utmContent,
+                      buttonLink: selectedNewsletterForDetail.buttonLink,
+                      buttonUtmSource: selectedNewsletterForDetail.buttonUtmSource,
+                      buttonUtmMedium: selectedNewsletterForDetail.buttonUtmMedium,
+                      buttonUtmCampaign: selectedNewsletterForDetail.buttonUtmCampaign,
+                      buttonUtmTerm: selectedNewsletterForDetail.buttonUtmTerm,
+                      buttonUtmContent: selectedNewsletterForDetail.buttonUtmContent,
+                      contenuHaut: selectedNewsletterForDetail.contenuMailHaut,
+                      contenuBas: selectedNewsletterForDetail.contenuMailBas,
+                      texteButton: selectedNewsletterForDetail.texteButton,
+                    })
+                    setMailPreviewOpen(true)
+                  }}
+                >
+                  <Eye className="mr-2 h-4 w-4" /> Visualiser
+                </Button>
               </div>
             ) : (
               <div className="space-y-4">
@@ -495,7 +631,7 @@ export default function NewsletterComponent() {
                     <li><strong>Pré-en-tête</strong> : Le texte d'aperçu visible dans la boîte de réception</li>
                     <li><strong>Contenu</strong> : Le corps de l'email, souvent en HTML</li>
                     <li><strong>Template</strong> : Le modèle graphique utilisé</li>
-                    <li><strong>Critères d'inscription</strong> : Les filtres pour cibler l'audience</li>
+                    <li><strong>Critère d'inscription</strong> : Envoi uniquement aux utilisateurs inscrits à la newsletter</li>
                   </ul>
                 </div>
                 <h3 className="text-lg font-medium">Statistiques</h3>
@@ -511,6 +647,8 @@ export default function NewsletterComponent() {
           </CardContent>
         </Card>
       </TabsContent>
+
+      <MailPreview open={mailPreviewOpen} onOpenChange={setMailPreviewOpen} mail={mailPreviewData || {}} />
     </Tabs>
   )
 }
