@@ -1,5 +1,6 @@
 "use client"
 
+import React, { use } from "react"
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { format } from "date-fns"
@@ -75,12 +76,22 @@ type CommandeDetail = {
     phonenumber: string
   }
   items: CommandeItem[]
+  shipping_carrier_site?: string
+  shipping_carrier_mapped?: string
+  current_state_mapped?: string
 }
 
-export default function CommandeDetailPage({ params }: { params: { id: string } }) {
+interface PageProps {
+  params: {
+    id: string
+  }
+}
+
+export default function CommandeDetailPage({ params }: PageProps) {
   const router = useRouter()
   const [commande, setCommande] = useState<CommandeDetail | null>(null)
   const [loading, setLoading] = useState(true)
+  const orderId = use(params).id
 
   // Fonction pour obtenir la couleur du badge en fonction du statut
   const getStatusColor = (status: string) => {
@@ -100,12 +111,11 @@ export default function CommandeDetailPage({ params }: { params: { id: string } 
     }
   }
 
-  // Simuler le chargement des données
   useEffect(() => {
     // Dans un cas réel, vous feriez un appel API ici
     setTimeout(() => {
       setCommande({
-        id: params.id,
+        id: orderId,
         id_order: "ORD123456",
         reference: "REF-A123",
         id_contact: "CONT456",
@@ -180,10 +190,13 @@ export default function CommandeDetailPage({ params }: { params: { id: string } 
             image_url: "/placeholder.svg",
           },
         ],
+        shipping_carrier_site: "Colissimo Livraison à Domicile",
+        shipping_carrier_mapped: "Colissimo",
+        current_state_mapped: "En cours de préparation",
       })
       setLoading(false)
     }, 500)
-  }, [params.id])
+  }, [orderId])
 
   if (loading) {
     return (
@@ -256,12 +269,27 @@ export default function CommandeDetailPage({ params }: { params: { id: string } 
             )}
 
             <div>
-              <h3 className="font-semibold">Adresse de livraison</h3>
+              <h3 className="font-semibold">Adresse</h3>
               <p>{commande.contact.address}</p>
               <p>
                 {commande.contact.zip} {commande.contact.city}
               </p>
               <p>{commande.contact.country}</p>
+            </div>
+
+            <div>
+              <h3 className="font-semibold">Provenance</h3>
+              <div className="space-y-2">
+                {commande.is_ca_itek && <p>CA Itek</p>}
+                {commande.is_amazon && <p>Amazon</p>}
+                {commande.is_tiktok && <p>TikTok</p>}
+                {commande.is_cdiscount && <p>Cdiscount</p>}
+                {commande.is_docmorris && <p>DocMorris</p>}
+                {commande.is_lcdp && <p>LCDP</p>}
+                {commande.is_shein && <p>Shein</p>}
+                {commande.is_izyshop && <p>Izyshop</p>}
+                {commande.is_other_marketplaces && <p>Autres marketplaces</p>}
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -349,121 +377,83 @@ export default function CommandeDetailPage({ params }: { params: { id: string } 
           <CardDescription>Détails techniques de la commande</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <h3 className="font-semibold mb-2">Identifiants</h3>
-              <Table>
-                <TableBody>
-                  <TableRow>
-                    <TableCell className="font-medium">ID</TableCell>
-                    <TableCell>{commande.id}</TableCell>
-                  </TableRow>
-                  <TableRow>
-                    <TableCell className="font-medium">ID Commande</TableCell>
-                    <TableCell>{commande.id_order}</TableCell>
-                  </TableRow>
-                  <TableRow>
-                    <TableCell className="font-medium">Référence</TableCell>
-                    <TableCell>{commande.reference}</TableCell>
-                  </TableRow>
-                  <TableRow>
-                    <TableCell className="font-medium">ID Contact</TableCell>
-                    <TableCell>{commande.id_contact}</TableCell>
-                  </TableRow>
-                  <TableRow>
-                    <TableCell className="font-medium">ID Panier</TableCell>
-                    <TableCell>{commande.id_cart}</TableCell>
-                  </TableRow>
-                </TableBody>
-              </Table>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {/* Identifiants */}
+            <div className="rounded-lg bg-gray-50 p-4 border border-gray-200">
+              <h4 className="font-semibold mb-2 text-gray-700">Identifiants</h4>
+              <div className="space-y-1 text-sm">
+                <div><span className="font-medium">ID :</span> {commande.id}</div>
+                <div><span className="font-medium">ID Commande :</span> {commande.id_order}</div>
+                <div><span className="font-medium">Référence :</span> {commande.reference}</div>
+                <div><span className="font-medium">ID Contact :</span> {commande.id_contact}</div>
+                <div><span className="font-medium">ID Panier :</span> {commande.id_cart}</div>
+              </div>
             </div>
-
-            <div>
-              <h3 className="font-semibold mb-2">Dates</h3>
-              <Table>
-                <TableBody>
-                  <TableRow>
-                    <TableCell className="font-medium">Créée le</TableCell>
-                    <TableCell>{format(new Date(commande.created_at), "dd/MM/yyyy HH:mm", { locale: fr })}</TableCell>
-                  </TableRow>
-                  <TableRow>
-                    <TableCell className="font-medium">Mise à jour le</TableCell>
-                    <TableCell>{format(new Date(commande.updated_at), "dd/MM/yyyy HH:mm", { locale: fr })}</TableCell>
-                  </TableRow>
-                </TableBody>
-              </Table>
+            {/* Dates */}
+            <div className="rounded-lg bg-gray-50 p-4 border border-gray-200">
+              <h4 className="font-semibold mb-2 text-gray-700">Dates</h4>
+              <div className="space-y-1 text-sm">
+                <div><span className="font-medium">Créée le :</span> {format(new Date(commande.created_at), "dd/MM/yyyy HH:mm", { locale: fr })}</div>
+                <div><span className="font-medium">Mise à jour le :</span> {format(new Date(commande.updated_at), "dd/MM/yyyy HH:mm", { locale: fr })}</div>
+              </div>
             </div>
-
-            <div>
-              <h3 className="font-semibold mb-2">Détails financiers</h3>
-              <Table>
-                <TableBody>
-                  <TableRow>
-                    <TableCell className="font-medium">Total payé</TableCell>
-                    <TableCell>
-                      {new Intl.NumberFormat("fr-FR", { style: "currency", currency: commande.currency }).format(
-                        commande.total_paid,
-                      )}
-                    </TableCell>
-                  </TableRow>
-                  <TableRow>
-                    <TableCell className="font-medium">Total payé (TTC)</TableCell>
-                    <TableCell>
-                      {new Intl.NumberFormat("fr-FR", { style: "currency", currency: commande.currency }).format(
-                        commande.total_paid_tax_incl,
-                      )}
-                    </TableCell>
-                  </TableRow>
-                  <TableRow>
-                    <TableCell className="font-medium">Total payé (HT)</TableCell>
-                    <TableCell>
-                      {new Intl.NumberFormat("fr-FR", { style: "currency", currency: commande.currency }).format(
-                        commande.total_paid_tax_excl,
-                      )}
-                    </TableCell>
-                  </TableRow>
-                  <TableRow>
-                    <TableCell className="font-medium">Total payé réel</TableCell>
-                    <TableCell>
-                      {new Intl.NumberFormat("fr-FR", { style: "currency", currency: commande.currency }).format(
-                        commande.total_paid_real,
-                      )}
-                    </TableCell>
-                  </TableRow>
-                </TableBody>
-              </Table>
+            {/* Détails financiers */}
+            <div className="rounded-lg bg-gray-50 p-4 border border-gray-200">
+              <h4 className="font-semibold mb-2 text-gray-700">Détails financiers</h4>
+              <div className="space-y-1 text-sm">
+                <div><span className="font-medium">Total payé :</span> {new Intl.NumberFormat("fr-FR", { style: "currency", currency: commande.currency }).format(commande.total_paid)}</div>
+                <div><span className="font-medium">Total payé (TTC) :</span> {new Intl.NumberFormat("fr-FR", { style: "currency", currency: commande.currency }).format(commande.total_paid_tax_incl)}</div>
+                <div><span className="font-medium">Total payé (HT) :</span> {new Intl.NumberFormat("fr-FR", { style: "currency", currency: commande.currency }).format(commande.total_paid_tax_excl)}</div>
+                <div><span className="font-medium">Total payé réel :</span> {new Intl.NumberFormat("fr-FR", { style: "currency", currency: commande.currency }).format(commande.total_paid_real)}</div>
+              </div>
             </div>
-
-            <div>
-              <h3 className="font-semibold mb-2">Remises</h3>
-              <Table>
-                <TableBody>
-                  <TableRow>
-                    <TableCell className="font-medium">Total remises</TableCell>
-                    <TableCell>
-                      {new Intl.NumberFormat("fr-FR", { style: "currency", currency: commande.currency }).format(
-                        commande.total_discounts,
-                      )}
-                    </TableCell>
-                  </TableRow>
-                  <TableRow>
-                    <TableCell className="font-medium">Remises (TTC)</TableCell>
-                    <TableCell>
-                      {new Intl.NumberFormat("fr-FR", { style: "currency", currency: commande.currency }).format(
-                        commande.total_discounts_tax_incl,
-                      )}
-                    </TableCell>
-                  </TableRow>
-                  <TableRow>
-                    <TableCell className="font-medium">Remises (HT)</TableCell>
-                    <TableCell>
-                      {new Intl.NumberFormat("fr-FR", { style: "currency", currency: commande.currency }).format(
-                        commande.total_discounts_tax_excl,
-                      )}
-                    </TableCell>
-                  </TableRow>
-                </TableBody>
-              </Table>
+            {/* Remises */}
+            <div className="rounded-lg bg-gray-50 p-4 border border-gray-200">
+              <h4 className="font-semibold mb-2 text-gray-700">Remises</h4>
+              <div className="space-y-1 text-sm">
+                <div><span className="font-medium">Total remises :</span> {new Intl.NumberFormat("fr-FR", { style: "currency", currency: commande.currency }).format(commande.total_discounts)}</div>
+                <div><span className="font-medium">Remises (TTC) :</span> {new Intl.NumberFormat("fr-FR", { style: "currency", currency: commande.currency }).format(commande.total_discounts_tax_incl)}</div>
+                <div><span className="font-medium">Remises (HT) :</span> {new Intl.NumberFormat("fr-FR", { style: "currency", currency: commande.currency }).format(commande.total_discounts_tax_excl)}</div>
+              </div>
+            </div>
+            {/* Provenance */}
+            <div className="rounded-lg bg-gray-50 p-4 border border-gray-200 col-span-1 md:col-span-2 lg:col-span-1">
+              <h4 className="font-semibold mb-2 text-gray-700">Provenance</h4>
+              <div className="flex flex-wrap gap-2">
+                {commande.is_ca_itek && <span className="px-2 py-1 rounded bg-green-100 text-green-800 text-xs font-medium">CA Itek</span>}
+                {commande.is_amazon && <span className="px-2 py-1 rounded bg-yellow-100 text-yellow-800 text-xs font-medium">Amazon</span>}
+                {commande.is_tiktok && <span className="px-2 py-1 rounded bg-pink-100 text-pink-800 text-xs font-medium">TikTok</span>}
+                {commande.is_cdiscount && <span className="px-2 py-1 rounded bg-blue-100 text-blue-800 text-xs font-medium">Cdiscount</span>}
+                {commande.is_docmorris && <span className="px-2 py-1 rounded bg-teal-100 text-teal-800 text-xs font-medium">DocMorris</span>}
+                {commande.is_lcdp && <span className="px-2 py-1 rounded bg-purple-100 text-purple-800 text-xs font-medium">LCDP</span>}
+                {commande.is_shein && <span className="px-2 py-1 rounded bg-fuchsia-100 text-fuchsia-800 text-xs font-medium">Shein</span>}
+                {commande.is_izyshop && <span className="px-2 py-1 rounded bg-orange-100 text-orange-800 text-xs font-medium">Izyshop</span>}
+                {commande.is_other_marketplaces && <span className="px-2 py-1 rounded bg-gray-200 text-gray-800 text-xs font-medium">Autres marketplaces</span>}
+              </div>
+            </div>
+            {/* Paiement */}
+            <div className="rounded-lg bg-gray-50 p-4 border border-gray-200">
+              <h4 className="font-semibold mb-2 text-gray-700">Paiement</h4>
+              <div className="space-y-1 text-sm">
+                <div><span className="font-medium">Méthode :</span> {commande.payment}</div>
+                <div><span className="font-medium">Module :</span> {commande.module}</div>
+              </div>
+            </div>
+            {/* Transporteur */}
+            <div className="rounded-lg bg-gray-50 p-4 border border-gray-200">
+              <h4 className="font-semibold mb-2 text-gray-700">Transporteur</h4>
+              <div className="space-y-1 text-sm">
+                <div><span className="font-medium">Transporteur du site :</span> {commande.shipping_carrier_site || "-"}</div>
+                <div><span className="font-medium">Transporteur mappé :</span> {commande.shipping_carrier_mapped || "-"}</div>
+              </div>
+            </div>
+            {/* Statut de la commande */}
+            <div className="rounded-lg bg-gray-50 p-4 border border-gray-200">
+              <h4 className="font-semibold mb-2 text-gray-700">Statut de la commande</h4>
+              <div className="space-y-1 text-sm">
+                <div><span className="font-medium">Statut du site :</span> {commande.current_state}</div>
+                <div><span className="font-medium">Statut mappé :</span> {commande.current_state_mapped || "-"}</div>
+              </div>
             </div>
           </div>
         </CardContent>
