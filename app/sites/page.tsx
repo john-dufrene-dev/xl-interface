@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Eye, Pencil, Trash2, Plus, ArrowUpDown } from "lucide-react"
+import { Eye, Pencil, Trash2, Plus, ArrowUpDown, Search, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { DataTable } from "@/components/data-table"
 import { useRouter } from "next/navigation"
@@ -76,6 +76,7 @@ export default function SitesPage() {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
   const [siteToDelete, setSiteToDelete] = useState<Site | null>(null)
+  const [globalSearch, setGlobalSearch] = useState("")
 
   // Fonction pour voir les détails d'un site
   const viewDetails = (id: string) => {
@@ -209,6 +210,18 @@ export default function SitesPage() {
     },
   ]
 
+  const filteredData = sitesList.filter((site) => {
+    let matchesGlobal = true
+    if (globalSearch) {
+      const search = globalSearch.toLowerCase()
+      matchesGlobal = (
+        site.name.toLowerCase().includes(search) ||
+        site.url.toLowerCase().includes(search)
+      )
+    }
+    return matchesGlobal
+  })
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
@@ -225,7 +238,38 @@ export default function SitesPage() {
         </div>
       </div>
 
-      <DataTable columns={columns} data={sitesList} searchKey="name" searchPlaceholder="Rechercher un site..." />
+      <div className="flex justify-start">
+        <div className="relative w-64">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+          <input
+            id="global-search-input"
+            type="text"
+            value={globalSearch}
+            onChange={e => setGlobalSearch(e.target.value)}
+            placeholder="Rechercher un mot-clé..."
+            className="w-full h-9 border border-gray-200 bg-white dark:bg-neutral-900 dark:border-neutral-800 rounded-md pl-10 pr-8 text-sm focus:ring-0 focus:outline-none shadow-none hover:border-gray-300 transition-all"
+          />
+          {globalSearch && (
+            <button
+              type="button"
+              tabIndex={-1}
+              onMouseDown={e => e.preventDefault()}
+              onClick={() => {
+                setGlobalSearch("");
+                setTimeout(() => {
+                  document.getElementById("global-search-input")?.focus();
+                }, 0);
+              }}
+              className="absolute right-2 top-1/2 -translate-y-1/2 p-0 m-0 bg-transparent border-none cursor-pointer"
+              style={{ lineHeight: 0 }}
+            >
+              <X className="h-4 w-4 text-gray-400" />
+            </button>
+          )}
+        </div>
+      </div>
+
+      <DataTable columns={columns} data={filteredData} searchPlaceholder="Rechercher un mot-clé..." />
 
       {/* Dialog pour ajouter un site */}
       <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>

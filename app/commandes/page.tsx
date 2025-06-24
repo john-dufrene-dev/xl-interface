@@ -1,16 +1,19 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import type { DateRange } from "react-day-picker"
 import { format } from "date-fns"
 import { fr } from "date-fns/locale"
-import { Eye, ArrowUpDown } from "lucide-react"
+import { Eye, ArrowUpDown, RotateCcw } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { DataTable } from "@/components/data-table"
 import { FilterBar } from "@/components/filter-bar"
 import { useRouter } from "next/navigation"
 import { Badge } from "@/components/ui/badge"
 import { ExportButton } from "@/components/export-button"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Input } from "@/components/ui/input"
+import { Search, X } from "lucide-react"
 
 // Types
 type Commande = {
@@ -25,6 +28,15 @@ type Commande = {
   created_at: string
   id_site: string
   contact_name: string
+  provenance: string
+}
+
+// Ajout des provenances possibles
+const provenances = ["CA Itek", "Tik Tok", "Amazon", "Cdiscount"]
+
+// Fonction utilitaire pour choisir une provenance aléatoire
+function getRandomProvenance() {
+  return provenances[Math.floor(Math.random() * provenances.length)]
 }
 
 // Données de démonstration
@@ -41,6 +53,7 @@ const commandes: Commande[] = [
     created_at: "2023-05-15T10:30:00",
     id_site: "1",
     contact_name: "Jean Dupont",
+    provenance: "CA Itek",
   },
   {
     id: "2",
@@ -54,6 +67,7 @@ const commandes: Commande[] = [
     created_at: "2023-05-14T14:20:00",
     id_site: "1",
     contact_name: "Marie Martin",
+    provenance: "Tik Tok",
   },
   {
     id: "3",
@@ -67,6 +81,7 @@ const commandes: Commande[] = [
     created_at: "2023-05-13T09:15:00",
     id_site: "2",
     contact_name: "Pierre Durand",
+    provenance: "Amazon",
   },
   {
     id: "4",
@@ -80,6 +95,7 @@ const commandes: Commande[] = [
     created_at: "2023-05-12T16:45:00",
     id_site: "3",
     contact_name: "Sophie Petit",
+    provenance: "Cdiscount",
   },
   {
     id: "5",
@@ -93,6 +109,7 @@ const commandes: Commande[] = [
     created_at: "2023-05-11T11:10:00",
     id_site: "1",
     contact_name: "Thomas Bernard",
+    provenance: "CA Itek",
   },
 ]
 
@@ -100,6 +117,12 @@ export default function CommandesPage() {
   const router = useRouter()
   const [dateRange, setDateRange] = useState<DateRange | undefined>()
   const [selectedSite, setSelectedSite] = useState("")
+  const [selectedProvenance, setSelectedProvenance] = useState("")
+  const [selectedStatut, setSelectedStatut] = useState("")
+  const [selectedPaiement, setSelectedPaiement] = useState("")
+  const [searchReference, setSearchReference] = useState("")
+  const [searchClient, setSearchClient] = useState("")
+  const [globalSearch, setGlobalSearch] = useState("")
 
   // Fonction pour réinitialiser les filtres
   const resetFilters = () => {
@@ -110,6 +133,12 @@ export default function CommandesPage() {
     today.setHours(23, 59, 59, 999)
     setDateRange({ from: sevenDaysAgo, to: today })
     setSelectedSite("")
+    setSelectedProvenance("")
+    setSelectedStatut("")
+    setSelectedPaiement("")
+    setSearchReference("")
+    setSearchClient("")
+    setGlobalSearch("")
   }
 
   // Initialiser avec les 7 derniers jours au chargement
@@ -142,29 +171,70 @@ export default function CommandesPage() {
     }
   }
 
+  // Définition des valeurs possibles pour les filtres
+  const statuts = ["payé", "expédié", "livré", "en attente", "annulé"]
+  const paiements = ["carte", "paypal", "virement"]
+
   // Définition des colonnes
-  const columns = [
+  const columns = useMemo(() => [
     {
       accessorKey: "reference",
       header: "Référence",
-      cell: ({ row }) => <div className="font-medium">{row.getValue("reference")}</div>,
+      cell: ({ row }: { row: any }) => <div className="font-medium">{row.getValue("reference")}</div>,
     },
     {
       accessorKey: "contact_name",
       header: "Client",
+      cell: ({ row }: { row: any }) => <div className="font-medium">{row.getValue("contact_name")}</div>,
     },
     {
       accessorKey: "current_state",
-      header: "Statut",
-      cell: ({ row }) => {
+      header: () => (
+        <Select
+          value={selectedStatut || "all"}
+          onValueChange={v => setSelectedStatut(v === "all" ? "" : v)}
+        >
+          <SelectTrigger
+            className="w-24 h-7 border border-gray-200 bg-white dark:bg-neutral-900 dark:border-neutral-800 rounded-md px-2 py-0 text-xs font-normal text-foreground focus:ring-0 focus:outline-none shadow-none hover:border-gray-300"
+            style={{ minWidth: 0, minHeight: 0 }}
+          >
+            <SelectValue placeholder="Statut" className="text-xs" />
+          </SelectTrigger>
+          <SelectContent className="text-xs">
+            <SelectItem value="all">Tous</SelectItem>
+            {statuts.map((statut) => (
+              <SelectItem key={statut} value={statut}>{statut.charAt(0).toUpperCase() + statut.slice(1)}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      ),
+      cell: ({ row }: { row: any }) => {
         const status = row.getValue("current_state") as string
         return <Badge className={`${getStatusColor(status)}`}>{status.charAt(0).toUpperCase() + status.slice(1)}</Badge>
       },
     },
     {
       accessorKey: "payment",
-      header: "Paiement",
-      cell: ({ row }) => {
+      header: () => (
+        <Select
+          value={selectedPaiement || "all"}
+          onValueChange={v => setSelectedPaiement(v === "all" ? "" : v)}
+        >
+          <SelectTrigger
+            className="w-24 h-7 border border-gray-200 bg-white dark:bg-neutral-900 dark:border-neutral-800 rounded-md px-2 py-0 text-xs font-normal text-foreground focus:ring-0 focus:outline-none shadow-none hover:border-gray-300"
+            style={{ minWidth: 0, minHeight: 0 }}
+          >
+            <SelectValue placeholder="Paiement" className="text-xs" />
+          </SelectTrigger>
+          <SelectContent className="text-xs">
+            <SelectItem value="all">Tous</SelectItem>
+            {paiements.map((p) => (
+              <SelectItem key={p} value={p}>{p.charAt(0).toUpperCase() + p.slice(1)}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      ),
+      cell: ({ row }: { row: any }) => {
         const payment = row.getValue("payment") as string
         return payment.charAt(0).toUpperCase() + payment.slice(1)
       },
@@ -204,6 +274,33 @@ export default function CommandesPage() {
       },
     },
     {
+      accessorKey: "provenance",
+      header: () => (
+        <Select
+          value={selectedProvenance || "all"}
+          onValueChange={v => setSelectedProvenance(v === "all" ? "" : v)}
+        >
+          <SelectTrigger
+            className="w-24 h-7 border border-gray-200 bg-white dark:bg-neutral-900 dark:border-neutral-800 rounded-md px-2 py-0 text-xs font-normal text-foreground focus:ring-0 focus:outline-none shadow-none hover:border-gray-300"
+            style={{ minWidth: 0, minHeight: 0 }}
+          >
+            <SelectValue placeholder="Provenance" className="text-xs" />
+          </SelectTrigger>
+          <SelectContent className="text-xs">
+            <SelectItem value="all">Toutes</SelectItem>
+            {provenances.map((prov) => (
+              <SelectItem key={prov} value={prov}>{prov}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      ),
+      cell: ({ row }: { row: any }) => (
+        <div className="px-2 py-1 rounded bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-100 w-fit">
+          {row.getValue("provenance")}
+        </div>
+      ),
+    },
+    {
       id: "actions",
       cell: ({ row }) => {
         return (
@@ -214,20 +311,33 @@ export default function CommandesPage() {
         )
       },
     },
-  ]
+  ], [searchReference, searchClient, selectedProvenance, selectedStatut, selectedPaiement]);
 
   // Filtrer les données en fonction des filtres sélectionnés
   const filteredData = commandes.filter((commande) => {
     let matchesSite = true
-
-    // Dans un cas réel, vous filtreriez par date ici
-    // Pour cet exemple, on ne filtre pas par date pour montrer toutes les données
+    let matchesProvenance = true
+    let matchesStatut = true
+    let matchesPaiement = true
+    let matchesGlobal = true
 
     if (selectedSite) {
       matchesSite = commande.id_site === selectedSite
     }
-
-    return matchesSite
+    if (selectedProvenance) {
+      matchesProvenance = commande.provenance === selectedProvenance
+    }
+    if (selectedStatut) {
+      matchesStatut = commande.current_state === selectedStatut
+    }
+    if (selectedPaiement) {
+      matchesPaiement = commande.payment === selectedPaiement
+    }
+    if (globalSearch) {
+      const search = globalSearch.toLowerCase()
+      matchesGlobal = commande.reference.toLowerCase().includes(search) || commande.contact_name.toLowerCase().includes(search)
+    }
+    return matchesSite && matchesProvenance && matchesStatut && matchesPaiement && matchesGlobal
   })
 
   return (
@@ -248,7 +358,42 @@ export default function CommandesPage() {
         onReset={resetFilters}
       />
 
-      <DataTable columns={columns} data={filteredData} searchPlaceholder="Rechercher..." />
+      <div className="flex justify-start">
+        <div className="relative w-64">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+          <input
+            id="global-search-input"
+            type="text"
+            value={globalSearch}
+            onChange={e => setGlobalSearch(e.target.value)}
+            placeholder="Rechercher un mot-clé..."
+            className="w-full h-9 border border-gray-200 bg-white dark:bg-neutral-900 dark:border-neutral-800 rounded-md pl-10 pr-8 text-sm focus:ring-0 focus:outline-none shadow-none hover:border-gray-300 transition-all"
+          />
+          {globalSearch && (
+            <button
+              type="button"
+              tabIndex={-1}
+              onMouseDown={e => e.preventDefault()}
+              onClick={() => {
+                setGlobalSearch("");
+                setTimeout(() => {
+                  document.getElementById("global-search-input")?.focus();
+                }, 0);
+              }}
+              className="absolute right-2 top-1/2 -translate-y-1/2 p-0 m-0 bg-transparent border-none cursor-pointer"
+              style={{ lineHeight: 0 }}
+            >
+              <X className="h-4 w-4 text-gray-400" />
+            </button>
+          )}
+        </div>
+      </div>
+
+      <DataTable
+        columns={columns}
+        data={filteredData}
+        searchPlaceholder="Rechercher un mot-clé..."
+      />
     </div>
   )
 }

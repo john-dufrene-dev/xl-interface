@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import type { DateRange } from "react-day-picker"
-import { Eye, ArrowUpDown, Tag } from "lucide-react"
+import { Eye, ArrowUpDown, Tag, Search, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { DataTable } from "@/components/data-table"
 import { FilterBar } from "@/components/filter-bar"
@@ -140,6 +140,7 @@ export default function ProduitsPage() {
   const router = useRouter()
   const [dateRange, setDateRange] = useState<DateRange | undefined>()
   const [selectedSite, setSelectedSite] = useState("")
+  const [globalSearch, setGlobalSearch] = useState("")
 
   // Fonction pour réinitialiser les filtres
   const resetFilters = () => {
@@ -277,15 +278,20 @@ export default function ProduitsPage() {
   // Filtrer les données en fonction des filtres sélectionnés
   const filteredData = produits.filter((produit) => {
     let matchesSite = true
-
-    // Dans un cas réel, vous filtreriez par date ici
-    // Pour cet exemple, on ne filtre pas par date pour montrer toutes les données
+    let matchesGlobal = true
 
     if (selectedSite) {
       matchesSite = produit.id_site === selectedSite
     }
-
-    return matchesSite
+    if (globalSearch) {
+      const search = globalSearch.toLowerCase()
+      matchesGlobal = (
+        (produit.name && produit.name.toLowerCase().includes(search)) ||
+        (produit.reference && produit.reference.toLowerCase().includes(search)) ||
+        (produit.category_default && produit.category_default.toLowerCase().includes(search))
+      )
+    }
+    return matchesSite && matchesGlobal
   })
 
   return (
@@ -306,7 +312,38 @@ export default function ProduitsPage() {
         onReset={resetFilters}
       />
 
-      <DataTable columns={columns} data={filteredData} searchPlaceholder="Rechercher..." />
+      <div className="flex justify-start">
+        <div className="relative w-64">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+          <input
+            id="global-search-input"
+            type="text"
+            value={globalSearch}
+            onChange={e => setGlobalSearch(e.target.value)}
+            placeholder="Rechercher un mot-clé..."
+            className="w-full h-9 border border-gray-200 bg-white dark:bg-neutral-900 dark:border-neutral-800 rounded-md pl-10 pr-8 text-sm focus:ring-0 focus:outline-none shadow-none hover:border-gray-300 transition-all"
+          />
+          {globalSearch && (
+            <button
+              type="button"
+              tabIndex={-1}
+              onMouseDown={e => e.preventDefault()}
+              onClick={() => {
+                setGlobalSearch("");
+                setTimeout(() => {
+                  document.getElementById("global-search-input")?.focus();
+                }, 0);
+              }}
+              className="absolute right-2 top-1/2 -translate-y-1/2 p-0 m-0 bg-transparent border-none cursor-pointer"
+              style={{ lineHeight: 0 }}
+            >
+              <X className="h-4 w-4 text-gray-400" />
+            </button>
+          )}
+        </div>
+      </div>
+
+      <DataTable columns={columns} data={filteredData} searchPlaceholder="Rechercher un mot-clé..." />
     </div>
   )
 }
