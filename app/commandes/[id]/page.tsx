@@ -5,7 +5,7 @@ import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { format } from "date-fns"
 import { fr } from "date-fns/locale"
-import { ArrowLeft, Package, FileDown, Copy, Check } from "lucide-react"
+import { ArrowLeft, Package, FileDown, Copy, Check, Eye, User } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
@@ -89,6 +89,15 @@ type CommandeDetail = {
   current_state_mapped?: string
 }
 
+// Type pour l'historique des statuts
+type StatusHistory = {
+  id: string
+  status: string
+  status_mapped?: string
+  date: string
+  comment?: string
+}
+
 interface PageProps {
   params: {
     id: string
@@ -107,6 +116,7 @@ export default function CommandeDetailPage({ params }: PageProps) {
   const [copiedRef, setCopiedRef] = useState(false)
   const [copiedContact, setCopiedContact] = useState(false)
   const [copiedCart, setCopiedCart] = useState(false)
+  const [copiedProduct, setCopiedProduct] = useState<string | null>(null)
 
   // Fonctions de copie avec retour visuel
   const handleCopy = (value: string, setCopied: (b: boolean) => void) => {
@@ -128,8 +138,38 @@ export default function CommandeDetailPage({ params }: PageProps) {
         return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300"
       case "annulé":
         return "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300"
+      case "en cours de préparation":
+        return "bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300"
+      case "en transit":
+        return "bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-300"
+      case "retourné":
+        return "bg-pink-100 text-pink-800 dark:bg-pink-900 dark:text-pink-300"
       default:
         return "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300"
+    }
+  }
+
+  // Fonction pour obtenir la couleur de la bordure en fonction du statut
+  const getStatusBorderColor = (status: string) => {
+    switch (status.toLowerCase()) {
+      case "payé":
+        return "border-l-green-500"
+      case "expédié":
+        return "border-l-blue-500"
+      case "livré":
+        return "border-l-purple-500"
+      case "en attente":
+        return "border-l-yellow-500"
+      case "annulé":
+        return "border-l-red-500"
+      case "en cours de préparation":
+        return "border-l-orange-500"
+      case "en transit":
+        return "border-l-indigo-500"
+      case "retourné":
+        return "border-l-pink-500"
+      default:
+        return "border-l-gray-500"
     }
   }
 
@@ -277,8 +317,15 @@ export default function CommandeDetailPage({ params }: PageProps) {
       <div className="grid gap-6 md:grid-cols-2">
         <Card>
           <CardHeader>
-            <CardTitle>Informations du client</CardTitle>
-            <CardDescription>Détails du contact associé à la commande</CardDescription>
+            <div className="flex justify-between items-center">
+              <div>
+                <CardTitle>Informations du client</CardTitle>
+                <CardDescription>Détails du contact associé à la commande</CardDescription>
+              </div>
+              <Button variant="outline" size="icon" className="h-8 w-8 p-0 hover:bg-gray-200" title="Voir le client">
+                <User className="w-5 h-5" />
+              </Button>
+            </div>
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
@@ -682,6 +729,44 @@ export default function CommandeDetailPage({ params }: PageProps) {
 
       <Card>
         <CardHeader>
+          <CardTitle>Historique des statuts de la commande</CardTitle>
+          <CardDescription>Évolution des statuts de la commande</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {[
+              { id: "1", status: "En attente", date: "2023-05-15T10:30:00" },
+              { id: "2", status: "Payé", date: "2023-05-15T10:32:00" },
+              { id: "3", status: "En cours de préparation", date: "2023-05-15T14:15:00" },
+              { id: "4", status: "Expédié", date: "2023-05-16T09:30:00" },
+              { id: "5", status: "En transit", date: "2023-05-17T11:45:00" },
+              { id: "6", status: "Livré", date: "2023-05-18T15:20:00" }
+            ].map((statusItem, index, arr) => (
+              <div
+                key={statusItem.id}
+                className={`relative pl-6 pb-4 ${getStatusBorderColor(statusItem.status)} border-l-2 ${index === 0 ? 'pt-0' : 'pt-4'}`}
+              >
+                {/* Point de statut */}
+                <div className={`absolute left-0 top-6 w-3 h-3 rounded-full border-2 border-white shadow-sm ${getStatusColor(statusItem.status).split(' ')[0].replace('bg-', 'bg-')}`}></div>
+                {/* Contenu du statut */}
+                <div className="ml-4 flex items-center justify-between">
+                  <Badge className={`${getStatusColor(statusItem.status)}`}>{statusItem.status}</Badge>
+                  <span className="text-sm text-muted-foreground ml-4">
+                    {format(new Date(statusItem.date), "dd/MM/yyyy à HH:mm", { locale: fr })}
+                  </span>
+                </div>
+                {/* Ligne de connexion (sauf pour le dernier élément) */}
+                {index < arr.length - 1 && (
+                  <div className={`absolute left-1.5 top-9 w-0.5 h-8 ${getStatusColor(statusItem.status).split(' ')[0].replace('bg-', 'bg-')}`}></div>
+                )}
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
           <CardTitle>Articles commandés</CardTitle>
           <CardDescription>Liste des produits de la commande</CardDescription>
         </CardHeader>
@@ -690,46 +775,116 @@ export default function CommandeDetailPage({ params }: PageProps) {
             <TableHeader>
               <TableRow>
                 <TableHead className="w-[100px]">Image</TableHead>
-                <TableHead>Produit</TableHead>
-                <TableHead>Référence</TableHead>
-                <TableHead className="text-right">Prix unitaire</TableHead>
-                <TableHead className="text-center">Quantité</TableHead>
-                <TableHead className="text-right">Total</TableHead>
+                <TableHead className="text-sm">Produit</TableHead>
+                <TableHead className="text-sm">Référence</TableHead>
+                <TableHead className="text-right text-sm">Prix unitaire HT</TableHead>
+                <TableHead className="text-right text-sm">Prix unitaire TTC</TableHead>
+                <TableHead className="text-right text-sm">Prix remisé TTC</TableHead>
+                <TableHead className="text-center text-sm">Quantité</TableHead>
+                <TableHead className="text-right text-sm">Total HT</TableHead>
+                <TableHead className="text-right text-sm">Total TTC</TableHead>
+                <TableHead className="text-right text-sm">TVA</TableHead>
+                <TableHead className="text-center text-sm">Action</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {commande.items.map((item) => (
-                <TableRow key={item.id}>
-                  <TableCell>
-                    <div className="h-12 w-12 rounded-md bg-muted">
-                      {item.image_url ? (
-                        <img
-                          src={item.image_url || "/placeholder.svg"}
-                          alt={item.name}
-                          className="h-full w-full object-cover rounded-md"
-                        />
+              {commande.items.map((item, idx) => {
+                // Exemple : le premier produit a une remise, le second non
+                const hasDiscount = idx === 0
+                const prixRemise = hasDiscount ? item.unit_price + 20 : 0
+                const prixUnitaireTTC = item.unit_price
+                const prixUnitaireHT = item.price_ht
+                const totalTTC = prixUnitaireTTC * item.quantity
+                const totalHT = prixUnitaireHT * item.quantity
+                const totalRemise = hasDiscount ? prixRemise * item.quantity : 0
+                const tva = item.tva
+                return (
+                  <TableRow key={item.id} className="text-sm">
+                    <TableCell>
+                      <div className="h-12 w-12 rounded-md bg-muted">
+                        {item.image_url ? (
+                          <img
+                            src={item.image_url || "/placeholder.svg"}
+                            alt={item.name}
+                            className="h-full w-full object-cover rounded-md"
+                          />
+                        ) : (
+                          <div className="flex h-full w-full items-center justify-center text-muted-foreground">
+                            <Package className="h-6 w-6" />
+                          </div>
+                        )}
+                      </div>
+                    </TableCell>
+                    <TableCell className="font-medium text-sm">
+                      <div className="flex items-center gap-2">
+                        {item.name}
+                        <button
+                          type="button"
+                          className="ml-1 p-1 hover:bg-gray-200 rounded"
+                          title="Copier le nom du produit"
+                          onClick={() => {
+                            navigator.clipboard.writeText(item.name)
+                            setCopiedProduct(item.id)
+                            setTimeout(() => setCopiedProduct(null), 1000)
+                          }}
+                        >
+                          {copiedProduct === item.id ? (
+                            <Check className="w-3 h-3 text-green-600" />
+                          ) : (
+                            <Copy className="w-3 h-3 text-gray-500" />
+                          )}
+                        </button>
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-sm">{item.reference}</TableCell>
+                    <TableCell className="text-right text-xs text-muted-foreground">
+                      {new Intl.NumberFormat("fr-FR", { style: "currency", currency: commande.currency }).format(prixUnitaireHT)}
+                    </TableCell>
+                    <TableCell className="text-right text-sm">
+                      {hasDiscount ? (
+                        <span className="text-green-700 font-semibold">
+                          {new Intl.NumberFormat("fr-FR", { style: "currency", currency: commande.currency }).format(prixUnitaireTTC)}
+                        </span>
                       ) : (
-                        <div className="flex h-full w-full items-center justify-center text-muted-foreground">
-                          <Package className="h-6 w-6" />
-                        </div>
+                        new Intl.NumberFormat("fr-FR", { style: "currency", currency: commande.currency }).format(prixUnitaireTTC)
                       )}
-                    </div>
-                  </TableCell>
-                  <TableCell className="font-medium">{item.name}</TableCell>
-                  <TableCell>{item.reference}</TableCell>
-                  <TableCell className="text-right">
-                    {new Intl.NumberFormat("fr-FR", { style: "currency", currency: commande.currency }).format(
-                      item.unit_price,
-                    )}
-                  </TableCell>
-                  <TableCell className="text-center">{item.quantity}</TableCell>
-                  <TableCell className="text-right font-medium">
-                    {new Intl.NumberFormat("fr-FR", { style: "currency", currency: commande.currency }).format(
-                      item.unit_price * item.quantity,
-                    )}
-                  </TableCell>
-                </TableRow>
-              ))}
+                    </TableCell>
+                    <TableCell className="text-right text-xs">
+                      {hasDiscount ? (
+                        <span className="line-through text-gray-400">
+                          {new Intl.NumberFormat("fr-FR", { style: "currency", currency: commande.currency }).format(prixRemise)}
+                        </span>
+                      ) : (
+                        "-"
+                      )}
+                    </TableCell>
+                    <TableCell className="text-center text-sm">{item.quantity}</TableCell>
+                    <TableCell className="text-right text-xs text-muted-foreground">
+                      {new Intl.NumberFormat("fr-FR", { style: "currency", currency: commande.currency }).format(totalHT)}
+                    </TableCell>
+                    <TableCell className="text-right font-medium text-sm">
+                      {hasDiscount ? (
+                        <>
+                          <span className="text-green-700 font-semibold">
+                            {new Intl.NumberFormat("fr-FR", { style: "currency", currency: commande.currency }).format(totalTTC)}
+                          </span>
+                          <span className="ml-2 line-through text-gray-400 text-xs">
+                            {new Intl.NumberFormat("fr-FR", { style: "currency", currency: commande.currency }).format(totalRemise)}
+                          </span>
+                        </>
+                      ) : (
+                        new Intl.NumberFormat("fr-FR", { style: "currency", currency: commande.currency }).format(totalTTC)
+                      )}
+                    </TableCell>
+                    <TableCell className="text-right text-xs">{tva}</TableCell>
+                    <TableCell className="text-center">
+                      <Button variant="outline" size="icon" className="h-8 w-8 p-0 hover:bg-gray-200" title="Voir le produit">
+                        <Eye className="w-5 h-5" />
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                )
+              })}
             </TableBody>
           </Table>
         </CardContent>
