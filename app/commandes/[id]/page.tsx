@@ -5,12 +5,13 @@ import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { format } from "date-fns"
 import { fr } from "date-fns/locale"
-import { ArrowLeft, Package, FileDown } from "lucide-react"
+import { ArrowLeft, Package, FileDown, Copy, Check } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
+import { useRef } from "react"
 
 // Types
 type CommandeItem = {
@@ -38,9 +39,16 @@ type CommandeDetail = {
   payment: string
   module: string
   shipping_number: string
+  total_price_tax_incl: number
+  total_price_tax_excl: number
+  total_price_product_tax_incl: number
+  total_price_product_tax_excl: number
+  total_tax: number
+  total_price_shipping_tax_excl: number
+  total_price_shipping_tax_incl: number
+  total_price_discount_tax_excl: number
+  total_price_discount_tax_incl: number
   total_discounts: number
-  total_discounts_tax_incl: number
-  total_discounts_tax_excl: number
   total_paid: number
   total_paid_tax_incl: number
   total_paid_tax_excl: number
@@ -91,7 +99,21 @@ export default function CommandeDetailPage({ params }: PageProps) {
   const router = useRouter()
   const [commande, setCommande] = useState<CommandeDetail | null>(null)
   const [loading, setLoading] = useState(true)
-  const orderId = use(params).id
+  const { id: orderId } = use(params)
+
+  // États pour retour visuel de la copie
+  const [copiedId, setCopiedId] = useState(false)
+  const [copiedOrder, setCopiedOrder] = useState(false)
+  const [copiedRef, setCopiedRef] = useState(false)
+  const [copiedContact, setCopiedContact] = useState(false)
+  const [copiedCart, setCopiedCart] = useState(false)
+
+  // Fonctions de copie avec retour visuel
+  const handleCopy = (value: string, setCopied: (b: boolean) => void) => {
+    navigator.clipboard.writeText(value)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 1000)
+  }
 
   // Fonction pour obtenir la couleur du badge en fonction du statut
   const getStatusColor = (status: string) => {
@@ -125,9 +147,16 @@ export default function CommandeDetailPage({ params }: PageProps) {
         payment: "carte",
         module: "stripe",
         shipping_number: "TRACK123456",
+        total_price_tax_incl: 129.99,
+        total_price_tax_excl: 108.33,
+        total_price_product_tax_incl: 119.99,
+        total_price_product_tax_excl: 99.99,
+        total_tax: 21.66,
+        total_price_shipping_tax_excl: 8.33,
+        total_price_shipping_tax_incl: 10.0,
+        total_price_discount_tax_excl: 0,
+        total_price_discount_tax_incl: 0,
         total_discounts: 0,
-        total_discounts_tax_incl: 0,
-        total_discounts_tax_excl: 0,
         total_paid: 129.99,
         total_paid_tax_incl: 129.99,
         total_paid_tax_excl: 108.33,
@@ -328,17 +357,36 @@ export default function CommandeDetailPage({ params }: PageProps) {
                 <span>Total produits (HT)</span>
                 <span>
                   {new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }).format(
-                    commande.total_products,
+                    commande.total_price_product_tax_excl,
                   )}
                 </span>
               </div>
-              {commande.total_discounts > 0 && (
+              <div className="flex justify-between">
+                <span>Total produits (TTC)</span>
+                <span>
+                  {new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }).format(
+                    commande.total_price_product_tax_incl,
+                  )}
+                </span>
+              </div>
+              {commande.total_price_discount_tax_excl > 0 && (
                 <div className="flex justify-between text-red-500">
-                  <span>Remises</span>
+                  <span>Remise (HT)</span>
                   <span>
                     -
                     {new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }).format(
-                      commande.total_discounts,
+                      commande.total_price_discount_tax_excl,
+                    )}
+                  </span>
+                </div>
+              )}
+              {commande.total_price_discount_tax_incl > 0 && (
+                <div className="flex justify-between text-red-500">
+                  <span>Remise (TTC)</span>
+                  <span>
+                    -
+                    {new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }).format(
+                      commande.total_price_discount_tax_incl,
                     )}
                   </span>
                 </div>
@@ -347,7 +395,15 @@ export default function CommandeDetailPage({ params }: PageProps) {
                 <span>Frais de livraison (HT)</span>
                 <span>
                   {new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }).format(
-                    commande.total_shipping_tax_excl,
+                    commande.total_price_shipping_tax_excl,
+                  )}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span>Frais de livraison (TTC)</span>
+                <span>
+                  {new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }).format(
+                    commande.total_price_shipping_tax_incl,
                   )}
                 </span>
               </div>
@@ -355,15 +411,21 @@ export default function CommandeDetailPage({ params }: PageProps) {
                 <span>TVA</span>
                 <span>
                   {new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }).format(
-                    commande.total_paid_tax_incl - commande.total_paid_tax_excl,
+                    commande.total_tax,
                   )}
                 </span>
               </div>
               <Separator className="my-2" />
               <div className="flex justify-between font-bold">
+                <span>Total (HT)</span>
+                <span>
+                  {new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }).format(commande.total_price_tax_excl)}
+                </span>
+              </div>
+              <div className="flex justify-between font-bold">
                 <span>Total (TTC)</span>
                 <span>
-                  {new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }).format(commande.total_paid)}
+                  {new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }).format(commande.total_price_tax_incl)}
                 </span>
               </div>
             </div>
@@ -377,16 +439,123 @@ export default function CommandeDetailPage({ params }: PageProps) {
           <CardDescription>Détails techniques de la commande</CardDescription>
         </CardHeader>
         <CardContent>
+          {/* Grille des synthèses - séparée et en haut */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            {/* Bloc Synthèse de la commande */}
+            <div className="rounded-lg bg-gray-50 p-4 border border-gray-200">
+              <h4 className="font-semibold mb-2 text-gray-700">Synthèse de la commande</h4>
+              <div className="space-y-1 text-sm">
+                <div><span className="font-medium">Total TTC :</span> {new Intl.NumberFormat("fr-FR", { style: "currency", currency: commande.currency }).format(commande.total_price_tax_incl)}</div>
+                <div><span className="font-medium">Total HT :</span> {new Intl.NumberFormat("fr-FR", { style: "currency", currency: commande.currency }).format(commande.total_price_tax_excl)}</div>
+                <div><span className="font-medium">TVA :</span> {new Intl.NumberFormat("fr-FR", { style: "currency", currency: commande.currency }).format(commande.total_tax)}</div>
+              </div>
+            </div>
+            {/* Bloc Synthèse produits */}
+            <div className="rounded-lg bg-gray-50 p-4 border border-gray-200">
+              <h4 className="font-semibold mb-2 text-gray-700">Synthèse produits</h4>
+              <div className="space-y-1 text-sm">
+                <div><span className="font-medium">Total produits TTC :</span> {new Intl.NumberFormat("fr-FR", { style: "currency", currency: commande.currency }).format(commande.total_price_product_tax_incl)}</div>
+                <div><span className="font-medium">Total produits HT :</span> {new Intl.NumberFormat("fr-FR", { style: "currency", currency: commande.currency }).format(commande.total_price_product_tax_excl)}</div>
+              </div>
+            </div>
+            {/* Bloc Synthèse livraison */}
+            <div className="rounded-lg bg-gray-50 p-4 border border-gray-200">
+              <h4 className="font-semibold mb-2 text-gray-700">Synthèse livraison</h4>
+              <div className="space-y-1 text-sm">
+                <div><span className="font-medium">Frais de livraison HT :</span> {new Intl.NumberFormat("fr-FR", { style: "currency", currency: commande.currency }).format(commande.total_price_shipping_tax_excl)}</div>
+                <div><span className="font-medium">Frais de livraison TTC :</span> {new Intl.NumberFormat("fr-FR", { style: "currency", currency: commande.currency }).format(commande.total_price_shipping_tax_incl)}</div>
+              </div>
+            </div>
+            {/* Bloc Synthèse remises */}
+            <div className="rounded-lg bg-gray-50 p-4 border border-gray-200">
+              <h4 className="font-semibold mb-2 text-gray-700">Synthèse remises</h4>
+              <div className="space-y-1 text-sm">
+                <div><span className="font-medium">Remise HT :</span> {new Intl.NumberFormat("fr-FR", { style: "currency", currency: commande.currency }).format(commande.total_price_discount_tax_excl)}</div>
+                <div><span className="font-medium">Remise TTC :</span> {new Intl.NumberFormat("fr-FR", { style: "currency", currency: commande.currency }).format(commande.total_price_discount_tax_incl)}</div>
+              </div>
+            </div>
+          </div>
+          {/* Grille des informations techniques (identifiants, dates, provenance, etc.) */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {/* Identifiants */}
             <div className="rounded-lg bg-gray-50 p-4 border border-gray-200">
               <h4 className="font-semibold mb-2 text-gray-700">Identifiants</h4>
               <div className="space-y-1 text-sm">
-                <div><span className="font-medium">ID :</span> {commande.id}</div>
-                <div><span className="font-medium">ID Commande :</span> {commande.id_order}</div>
-                <div><span className="font-medium">Référence :</span> {commande.reference}</div>
-                <div><span className="font-medium">ID Contact :</span> {commande.id_contact}</div>
-                <div><span className="font-medium">ID Panier :</span> {commande.id_cart}</div>
+                <div className="flex items-center justify-between gap-2">
+                  <span><span className="font-medium">ID :</span> {commande.id}</span>
+                  <button
+                    type="button"
+                    className="ml-2 p-1 hover:bg-gray-200 rounded"
+                    title="Copier l'ID"
+                    onClick={() => handleCopy(commande.id, setCopiedId)}
+                  >
+                    {copiedId ? (
+                      <Check className="w-3 h-3 text-green-600" />
+                    ) : (
+                      <Copy className="w-3 h-3 text-gray-500" />
+                    )}
+                  </button>
+                </div>
+                <div className="flex items-center justify-between gap-2">
+                  <span><span className="font-medium">ID Commande :</span> {commande.id_order}</span>
+                  <button
+                    type="button"
+                    className="ml-2 p-1 hover:bg-gray-200 rounded"
+                    title="Copier l'ID Commande"
+                    onClick={() => handleCopy(commande.id_order, setCopiedOrder)}
+                  >
+                    {copiedOrder ? (
+                      <Check className="w-3 h-3 text-green-600" />
+                    ) : (
+                      <Copy className="w-3 h-3 text-gray-500" />
+                    )}
+                  </button>
+                </div>
+                <div className="flex items-center justify-between gap-2">
+                  <span><span className="font-medium">Référence :</span> {commande.reference}</span>
+                  <button
+                    type="button"
+                    className="ml-2 p-1 hover:bg-gray-200 rounded"
+                    title="Copier la référence"
+                    onClick={() => handleCopy(commande.reference, setCopiedRef)}
+                  >
+                    {copiedRef ? (
+                      <Check className="w-3 h-3 text-green-600" />
+                    ) : (
+                      <Copy className="w-3 h-3 text-gray-500" />
+                    )}
+                  </button>
+                </div>
+                <div className="flex items-center justify-between gap-2">
+                  <span><span className="font-medium">ID Contact :</span> {commande.id_contact}</span>
+                  <button
+                    type="button"
+                    className="ml-2 p-1 hover:bg-gray-200 rounded"
+                    title="Copier l'ID Contact"
+                    onClick={() => handleCopy(commande.id_contact, setCopiedContact)}
+                  >
+                    {copiedContact ? (
+                      <Check className="w-3 h-3 text-green-600" />
+                    ) : (
+                      <Copy className="w-3 h-3 text-gray-500" />
+                    )}
+                  </button>
+                </div>
+                <div className="flex items-center justify-between gap-2">
+                  <span><span className="font-medium">ID Panier :</span> {commande.id_cart}</span>
+                  <button
+                    type="button"
+                    className="ml-2 p-1 hover:bg-gray-200 rounded"
+                    title="Copier l'ID Panier"
+                    onClick={() => handleCopy(commande.id_cart, setCopiedCart)}
+                  >
+                    {copiedCart ? (
+                      <Check className="w-3 h-3 text-green-600" />
+                    ) : (
+                      <Copy className="w-3 h-3 text-gray-500" />
+                    )}
+                  </button>
+                </div>
               </div>
             </div>
             {/* Dates */}
@@ -395,25 +564,6 @@ export default function CommandeDetailPage({ params }: PageProps) {
               <div className="space-y-1 text-sm">
                 <div><span className="font-medium">Créée le :</span> {format(new Date(commande.created_at), "dd/MM/yyyy HH:mm", { locale: fr })}</div>
                 <div><span className="font-medium">Mise à jour le :</span> {format(new Date(commande.updated_at), "dd/MM/yyyy HH:mm", { locale: fr })}</div>
-              </div>
-            </div>
-            {/* Détails financiers */}
-            <div className="rounded-lg bg-gray-50 p-4 border border-gray-200">
-              <h4 className="font-semibold mb-2 text-gray-700">Détails financiers</h4>
-              <div className="space-y-1 text-sm">
-                <div><span className="font-medium">Total payé :</span> {new Intl.NumberFormat("fr-FR", { style: "currency", currency: commande.currency }).format(commande.total_paid)}</div>
-                <div><span className="font-medium">Total payé (TTC) :</span> {new Intl.NumberFormat("fr-FR", { style: "currency", currency: commande.currency }).format(commande.total_paid_tax_incl)}</div>
-                <div><span className="font-medium">Total payé (HT) :</span> {new Intl.NumberFormat("fr-FR", { style: "currency", currency: commande.currency }).format(commande.total_paid_tax_excl)}</div>
-                <div><span className="font-medium">Total payé réel :</span> {new Intl.NumberFormat("fr-FR", { style: "currency", currency: commande.currency }).format(commande.total_paid_real)}</div>
-              </div>
-            </div>
-            {/* Remises */}
-            <div className="rounded-lg bg-gray-50 p-4 border border-gray-200">
-              <h4 className="font-semibold mb-2 text-gray-700">Remises</h4>
-              <div className="space-y-1 text-sm">
-                <div><span className="font-medium">Total remises :</span> {new Intl.NumberFormat("fr-FR", { style: "currency", currency: commande.currency }).format(commande.total_discounts)}</div>
-                <div><span className="font-medium">Remises (TTC) :</span> {new Intl.NumberFormat("fr-FR", { style: "currency", currency: commande.currency }).format(commande.total_discounts_tax_incl)}</div>
-                <div><span className="font-medium">Remises (HT) :</span> {new Intl.NumberFormat("fr-FR", { style: "currency", currency: commande.currency }).format(commande.total_discounts_tax_excl)}</div>
               </div>
             </div>
             {/* Provenance */}
