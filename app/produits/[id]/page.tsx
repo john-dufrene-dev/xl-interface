@@ -245,11 +245,11 @@ export default function ProduitDetailPage({ params }: { params: Promise<{ id: st
               </div>
               <div className="flex items-center gap-2">
                 <span className="font-semibold">Statut :</span>
-                <span className={`px-3 py-1 rounded-full text-white text-xs font-bold ${produit.status === "Actif" ? "bg-green-600" : "bg-red-600"}`}>{produit.status === "Actif" ? "OUI" : "NON"}</span>
+                <Badge variant={produit.status === "Actif" ? "outline" : "outline"} className={produit.status === "Actif" ? "bg-rose-100 text-rose-700 border-rose-200" : "bg-gray-100 text-gray-800 border-gray-200"}>{produit.status === "Actif" ? "Oui" : "Non"}</Badge>
               </div>
               <div className="flex items-center gap-2">
                 <span className="font-semibold">Médicament OTC :</span>
-                <span className={`px-3 py-1 rounded-full text-white text-xs font-bold ${produit.usage_advice ? "bg-green-600" : "bg-red-600"}`}>{produit.usage_advice ? "OUI" : "NON"}</span>
+                <Badge variant={produit.usage_advice ? "outline" : "outline"} className={produit.usage_advice ? "bg-rose-100 text-rose-700 border-rose-200" : "bg-gray-100 text-gray-800 border-gray-200"}>{produit.usage_advice ? "Oui" : "Non"}</Badge>
               </div>
               <div><span className="font-semibold">ID Site :</span> {produit.id_site}</div>
               <div>

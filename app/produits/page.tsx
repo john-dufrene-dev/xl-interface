@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import type { DateRange } from "react-day-picker"
-import { Eye, ArrowUpDown, Tag, Search, X } from "lucide-react"
+import { Eye, ArrowUpDown, Tag, Search, X, Check } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { DataTable } from "@/components/data-table"
 import { FilterBar } from "@/components/filter-bar"
@@ -250,12 +250,14 @@ export default function ProduitsPage() {
       accessorKey: "is_discounted",
       header: () => (
         <Select value={promotionFilter} onValueChange={setPromotionFilter}>
-          <SelectTrigger className="w-24 h-7 border border-gray-200 bg-white dark:bg-neutral-900 dark:border-neutral-800 rounded-md px-2 py-0 text-xs font-normal text-foreground focus:ring-0 focus:outline-none shadow-none hover:border-gray-300">
-            <SelectValue placeholder="Promotion" />
+          <SelectTrigger className="w-28 h-7 border border-gray-200 bg-white dark:bg-neutral-900 dark:border-neutral-800 rounded-md px-2 py-0 text-xs font-normal text-foreground focus:ring-0 focus:outline-none shadow-none hover:border-gray-300">
+            Promotion
           </SelectTrigger>
           <SelectContent>
             {promoOptions.map(opt => (
-              <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+              <SelectItem key={opt.value} value={opt.value}>
+                {opt.icon} {opt.label}
+              </SelectItem>
             ))}
           </SelectContent>
         </Select>
@@ -263,9 +265,9 @@ export default function ProduitsPage() {
       cell: ({ row }: { row: any }) => {
         const isDiscounted = row.getValue("is_discounted")
         return isDiscounted ? (
-          <Badge className="bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300">Oui</Badge>
+          <Badge variant="outline" className="bg-rose-100 text-rose-700 border-rose-200">Oui</Badge>
         ) : (
-          <Badge variant="outline" className="bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300">Non</Badge>
+          <Badge variant="outline" className="bg-gray-100 text-gray-800 border-gray-200">Non</Badge>
         )
       },
     },
@@ -273,12 +275,14 @@ export default function ProduitsPage() {
       accessorKey: "status",
       header: () => (
         <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-24 h-7 border border-gray-200 bg-white dark:bg-neutral-900 dark:border-neutral-800 rounded-md px-2 py-0 text-xs font-normal text-foreground focus:ring-0 focus:outline-none shadow-none hover:border-gray-300">
-            <SelectValue placeholder="Statut" />
+          <SelectTrigger className="w-28 h-7 border border-gray-200 bg-white dark:bg-neutral-900 dark:border-neutral-800 rounded-md px-2 py-0 text-xs font-normal text-foreground focus:ring-0 focus:outline-none shadow-none hover:border-gray-300">
+            Statut
           </SelectTrigger>
           <SelectContent>
             {statusOptions.map(opt => (
-              <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+              <SelectItem key={opt.value} value={opt.value}>
+                {opt.icon} {opt.label}
+              </SelectItem>
             ))}
           </SelectContent>
         </Select>
@@ -286,7 +290,7 @@ export default function ProduitsPage() {
       cell: ({ row }: { row: any }) => {
         const status = row.getValue("status")
         return (
-          <span className={`px-2 py-1 rounded-full text-white text-xs font-bold ${status === "Actif" ? "bg-green-600" : "bg-red-600"}`}>{status === "Actif" ? "OUI" : "NON"}</span>
+          <Badge variant="outline" className={status === "Actif" ? "bg-rose-100 text-rose-700 border-rose-200" : "bg-gray-100 text-gray-800 border-gray-200"}>{status === "Actif" ? "Oui" : "Non"}</Badge>
         )
       },
     },
@@ -333,11 +337,11 @@ export default function ProduitsPage() {
     }
     // Filtre promotion colonne
     if (promotionFilter !== "all") {
-      matchesPromotion = promotionFilter === "oui" ? produit.is_discounted : !produit.is_discounted
+      matchesPromotion = promotionFilter === "oui" ? !!produit.is_discounted : !produit.is_discounted
     }
     // Filtre statut colonne
     if (statusFilter !== "all") {
-      matchesStatus = statusFilter === "oui" ? produit.status === "Actif" : produit.status !== "Actif"
+      matchesStatus = statusFilter === "oui" ? produit.status === "Actif" : produit.status === "Inactif"
     }
     // Recherche globale
     if (globalSearch) {
@@ -352,14 +356,14 @@ export default function ProduitsPage() {
   })
 
   const statusOptions = [
-    { value: "all", label: "Tous" },
-    { value: "oui", label: "Oui" },
-    { value: "non", label: "Non" },
+    { value: "all", label: "Tous", icon: null },
+    { value: "oui", label: "Activer", icon: <Check className="w-4 h-4 mr-1 inline text-green-600" /> },
+    { value: "non", label: "Désactiver", icon: <X className="w-4 h-4 mr-1 inline text-red-600" /> },
   ]
   const promoOptions = [
-    { value: "all", label: "Toutes" },
-    { value: "oui", label: "Oui" },
-    { value: "non", label: "Non" },
+    { value: "all", label: "Toutes", icon: null },
+    { value: "oui", label: "Oui", icon: <Check className="w-4 h-4 mr-1 inline text-green-600" /> },
+    { value: "non", label: "Non", icon: <X className="w-4 h-4 mr-1 inline text-red-600" /> },
   ]
 
   return (
