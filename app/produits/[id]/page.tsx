@@ -1,17 +1,18 @@
 "use client"
 
+import React from "react"
 import { CardFooter } from "@/components/ui/card"
 
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { format } from "date-fns"
 import { fr } from "date-fns/locale"
-import { ArrowLeft, Tag, FileDown, ShoppingBag } from "lucide-react"
+import { ArrowLeft, Tag, FileDown, ShoppingBag, Copy, Check } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
 import { Badge } from "@/components/ui/badge"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import Link from "next/link"
 
 // Types
 type ProduitDetail = {
@@ -20,12 +21,16 @@ type ProduitDetail = {
   id_site: string
   name: string
   description: string | null
+  short_description: string | null
+  long_description: string | null
   url: string | null
   image: string | null
-  sku: string | null
+  images: string[] | null
   reference: string | null
+  ean13: string | null
   price: number
   price_excl_tax: number
+  purchase_price: number
   tax_value: number
   is_discounted: boolean
   promo_price: number
@@ -39,30 +44,45 @@ type ProduitDetail = {
   category_3: string | null
   category_4: string | null
   category_5: string | null
+  quantity: number
+  weight: number | null
+  composition: string | null
+  usage_advice: boolean
+  brand: string | null
+  min_sale_qty: number
+  max_sale_qty: number
+  status: string
 }
 
-export default function ProduitDetailPage({ params }: { params: { id: string } }) {
+export default function ProduitDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const resolvedParams = React.use(params)
+  const id = resolvedParams.id
   const router = useRouter()
   const [produit, setProduit] = useState<ProduitDetail | null>(null)
   const [loading, setLoading] = useState(true)
+  const [imageModal, setImageModal] = useState<string | null>(null)
+  const [copied, setCopied] = useState<string | null>(null)
 
   // Simuler le chargement des données
   useEffect(() => {
-    // Dans un cas réel, vous feriez un appel API ici
     setTimeout(() => {
       setProduit({
-        id: params.id,
+        id: id,
         id_product: "PROD123",
         id_site: "1",
         name: "Smartphone XYZ",
         description:
           "Un smartphone haut de gamme avec des fonctionnalités avancées. Écran OLED de 6,5 pouces, processeur octa-core, 8 Go de RAM, 128 Go de stockage, appareil photo 48 MP, batterie 4500 mAh avec charge rapide.",
+        short_description: "Smartphone haut de gamme, écran OLED, 8Go RAM.",
+        long_description: "Ce smartphone offre une expérience utilisateur exceptionnelle grâce à son écran OLED, son processeur puissant et sa grande capacité de stockage.",
         url: "/produits/smartphone-xyz",
         image: "/placeholder.svg",
-        sku: "SKU123",
+        images: ["/placeholder.svg", "/placeholder.svg"],
         reference: "REF-S123",
+        ean13: "1234567890123",
         price: 999.99,
         price_excl_tax: 833.33,
+        purchase_price: 700.00,
         tax_value: 20.0,
         is_discounted: true,
         promo_price: 899.99,
@@ -76,10 +96,24 @@ export default function ProduitDetailPage({ params }: { params: { id: string } }
         category_3: null,
         category_4: null,
         category_5: null,
+        quantity: 42,
+        weight: 0.18,
+        composition: "Plastique, verre, lithium",
+        usage_advice: true,
+        brand: "SuperTech",
+        min_sale_qty: 1,
+        max_sale_qty: 5,
+        status: "Actif",
       })
       setLoading(false)
     }, 500)
-  }, [params.id])
+  }, [id])
+
+  const handleCopy = (value: string, key: string) => {
+    navigator.clipboard.writeText(value)
+    setCopied(key)
+    setTimeout(() => setCopied(null), 1000)
+  }
 
   if (loading) {
     return (
@@ -126,390 +160,241 @@ export default function ProduitDetailPage({ params }: { params: { id: string } }
         </div>
       </div>
 
-      <Tabs defaultValue="details">
-        <TabsList>
-          <TabsTrigger value="details">Détails</TabsTrigger>
-          <TabsTrigger value="pricing">Tarification</TabsTrigger>
-          <TabsTrigger value="categories">Catégories</TabsTrigger>
-        </TabsList>
+      {/* Modale d'agrandissement d'image */}
+      {imageModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70" onClick={() => setImageModal(null)}>
+          <img src={imageModal} alt="Agrandissement" className="max-h-[90vh] max-w-[90vw] rounded shadow-lg" />
+        </div>
+      )}
 
-        <TabsContent value="details" className="space-y-6 mt-6">
-          <div className="grid gap-6 md:grid-cols-2">
-            <Card>
-              <CardHeader>
-                <CardTitle>Informations produit</CardTitle>
-                <CardDescription>Détails et caractéristiques du produit</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex justify-center mb-4">
-                  <div className="h-48 w-48 rounded-md bg-muted">
-                    {produit.image ? (
-                      <img
-                        src={produit.image || "/placeholder.svg"}
-                        alt={produit.name}
-                        className="h-full w-full object-cover rounded-md"
-                      />
-                    ) : (
-                      <div className="flex h-full w-full items-center justify-center text-muted-foreground">
-                        <Tag className="h-12 w-12" />
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                <div>
-                  <h3 className="font-semibold">Nom</h3>
-                  <p>{produit.name}</p>
-                </div>
-
-                <div>
-                  <h3 className="font-semibold">Description</h3>
-                  <p>{produit.description || "Aucune description"}</p>
-                </div>
-
-                <div>
-                  <h3 className="font-semibold">Identifiants</h3>
-                  <div className="grid grid-cols-2 gap-2">
-                    <div>
-                      <p className="text-sm text-muted-foreground">ID Produit</p>
-                      <p>{produit.id_product}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">SKU</p>
-                      <p>{produit.sku || "Non défini"}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">Référence</p>
-                      <p>{produit.reference || "Non définie"}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">ID Site</p>
-                      <p>{produit.id_site}</p>
-                    </div>
-                  </div>
-                </div>
-
-                <div>
-                  <h3 className="font-semibold">Site</h3>
-                  <p>Site {produit.id_site}</p>
-                </div>
-
-                <div>
-                  <h3 className="font-semibold">Dates</h3>
-                  <div className="grid grid-cols-2 gap-2">
-                    <div>
-                      <p className="text-sm text-muted-foreground">Créé le</p>
-                      <p>{format(new Date(produit.created_at), "dd/MM/yyyy HH:mm", { locale: fr })}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">Mis à jour le</p>
-                      <p>{format(new Date(produit.updated_at), "dd/MM/yyyy HH:mm", { locale: fr })}</p>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <div className="space-y-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Prix et taxes</CardTitle>
-                  <CardDescription>Informations de tarification</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="flex justify-between items-center">
-                    <span className="text-lg">Prix public</span>
-                    <span className="text-lg font-bold">
-                      {new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }).format(produit.price)}
-                    </span>
-                  </div>
-
-                  <div className="flex justify-between items-center">
-                    <span>Prix HT</span>
-                    <span>
-                      {new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }).format(
-                        produit.price_excl_tax,
-                      )}
-                    </span>
-                  </div>
-
-                  <div className="flex justify-between items-center">
-                    <span>TVA</span>
-                    <span>{produit.tax_value}%</span>
-                  </div>
-
-                  {produit.is_discounted && (
-                    <>
-                      <Separator />
-                      <div className="flex justify-between items-center">
-                        <span className="text-lg">Prix promotionnel</span>
-                        <span className="text-lg font-bold text-red-600">
-                          {new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }).format(
-                            produit.promo_price,
-                          )}
-                        </span>
-                      </div>
-
-                      <div className="flex justify-between items-center">
-                        <span>Réduction</span>
-                        <span className="text-red-600">
-                          -{Math.round((1 - produit.promo_price / produit.price) * 100)}%
-                        </span>
-                      </div>
-
-                      {produit.date_promo_from && produit.date_promo_to && (
-                        <div>
-                          <span className="text-sm text-muted-foreground">Période de promotion:</span>
-                          <p>
-                            Du {format(new Date(produit.date_promo_from), "dd/MM/yyyy", { locale: fr })} au{" "}
-                            {format(new Date(produit.date_promo_to), "dd/MM/yyyy", { locale: fr })}
-                          </p>
-                        </div>
-                      )}
-                    </>
-                  )}
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle>Catégories</CardTitle>
-                  <CardDescription>Classification du produit</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-2">
-                    {produit.category_default && (
-                      <div>
-                        <Badge variant="outline" className="bg-primary/10 text-primary">
-                          {produit.category_default}
-                        </Badge>
-                        <span className="ml-2 text-xs text-muted-foreground">Catégorie principale</span>
-                      </div>
-                    )}
-
-                    {produit.category_1 && (
-                      <div>
-                        <Badge variant="outline">{produit.category_1}</Badge>
-                      </div>
-                    )}
-
-                    {produit.category_2 && (
-                      <div>
-                        <Badge variant="outline">{produit.category_2}</Badge>
-                      </div>
-                    )}
-
-                    {produit.category_3 && (
-                      <div>
-                        <Badge variant="outline">{produit.category_3}</Badge>
-                      </div>
-                    )}
-
-                    {produit.category_4 && (
-                      <div>
-                        <Badge variant="outline">{produit.category_4}</Badge>
-                      </div>
-                    )}
-
-                    {produit.category_5 && (
-                      <div>
-                        <Badge variant="outline">{produit.category_5}</Badge>
-                      </div>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          </div>
-        </TabsContent>
-
-        <TabsContent value="pricing" className="mt-6">
+      <div className="grid grid-cols-1 md:grid-cols-10 gap-6">
+        {/* Colonne gauche : images + infos principales */}
+        <div className="md:col-span-6 space-y-6">
+          {/* Bloc Images */}
           <Card>
             <CardHeader>
-              <CardTitle>Gestion des prix</CardTitle>
-              <CardDescription>Configurez les prix et promotions</CardDescription>
+              <CardTitle>Images</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="grid gap-4 md:grid-cols-2">
-                <div>
-                  <h3 className="font-semibold mb-2">Prix standard</h3>
-                  <div className="space-y-4">
-                    <div>
-                      <label className="text-sm text-muted-foreground">Prix HT</label>
-                      <div className="flex items-center mt-1">
-                        <input
-                          type="number"
-                          value={produit.price_excl_tax}
-                          className="w-full rounded-md border border-input bg-background px-3 py-2"
-                          readOnly
-                        />
-                        <span className="ml-2">€</span>
-                      </div>
-                    </div>
-
-                    <div>
-                      <label className="text-sm text-muted-foreground">Taux de TVA</label>
-                      <div className="flex items-center mt-1">
-                        <input
-                          type="number"
-                          value={produit.tax_value}
-                          className="w-full rounded-md border border-input bg-background px-3 py-2"
-                          readOnly
-                        />
-                        <span className="ml-2">%</span>
-                      </div>
-                    </div>
-
-                    <div>
-                      <label className="text-sm text-muted-foreground">Prix TTC</label>
-                      <div className="flex items-center mt-1">
-                        <input
-                          type="number"
-                          value={produit.price}
-                          className="w-full rounded-md border border-input bg-background px-3 py-2"
-                          readOnly
-                        />
-                        <span className="ml-2">€</span>
-                      </div>
-                    </div>
+            <CardContent>
+              <div className="flex space-x-2 mb-2">
+                {produit.images && produit.images.length > 0 ? (
+                  produit.images.map((img, idx) => (
+                    <img
+                      key={idx}
+                      src={img}
+                      alt={produit.name}
+                      className="h-32 w-32 object-cover rounded-md border cursor-pointer hover:scale-105 transition-transform"
+                      onClick={() => setImageModal(img)}
+                    />
+                  ))
+                ) : (
+                  <div className="h-32 w-32 rounded-md bg-muted flex items-center justify-center">
+                    <Tag className="h-12 w-12 text-muted-foreground" />
                   </div>
-                </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
 
-                <div>
-                  <h3 className="font-semibold mb-2">Prix promotionnel</h3>
-                  <div className="space-y-4">
-                    <div className="flex items-center">
-                      <input
-                        type="checkbox"
-                        checked={produit.is_discounted}
-                        className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
-                        readOnly
-                      />
-                      <label className="ml-2">Activer la promotion</label>
-                    </div>
-
-                    <div>
-                      <label className="text-sm text-muted-foreground">Prix promotionnel TTC</label>
-                      <div className="flex items-center mt-1">
-                        <input
-                          type="number"
-                          value={produit.promo_price}
-                          className="w-full rounded-md border border-input bg-background px-3 py-2"
-                          readOnly
-                        />
-                        <span className="ml-2">€</span>
-                      </div>
-                    </div>
-
-                    <div>
-                      <label className="text-sm text-muted-foreground">Date de début</label>
-                      <input
-                        type="date"
-                        value={produit.date_promo_from ? format(new Date(produit.date_promo_from), "yyyy-MM-dd") : ""}
-                        className="w-full mt-1 rounded-md border border-input bg-background px-3 py-2"
-                        readOnly
-                      />
-                    </div>
-
-                    <div>
-                      <label className="text-sm text-muted-foreground">Date de fin</label>
-                      <input
-                        type="date"
-                        value={produit.date_promo_to ? format(new Date(produit.date_promo_to), "yyyy-MM-dd") : ""}
-                        className="w-full mt-1 rounded-md border border-input bg-background px-3 py-2"
-                        readOnly
-                      />
-                    </div>
+          {/* Bloc Informations générales */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Informations générales</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              <div className="flex items-center gap-2">
+                <span className="font-semibold">Nom :</span> {produit.name}
+                <button type="button" className="ml-1 p-1 hover:bg-gray-200 rounded" title="Copier le nom"
+                  onClick={() => handleCopy(produit.name, 'name')}>
+                  {copied === 'name' ? <Check className="w-3 h-3 text-green-600" /> : <Copy className="w-3 h-3 text-gray-500" />}
+                </button>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="font-semibold">Marque :</span> {produit.brand || "-"}
+                {produit.brand && (
+                  <button type="button" className="ml-1 p-1 hover:bg-gray-200 rounded" title="Copier la marque"
+                    onClick={() => handleCopy(produit.brand!, 'brand')}>
+                    {copied === 'brand' ? <Check className="w-3 h-3 text-green-600" /> : <Copy className="w-3 h-3 text-gray-500" />}
+                  </button>
+                )}
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="font-semibold">Référence :</span> {produit.reference}
+                {produit.reference && (
+                  <button type="button" className="ml-1 p-1 hover:bg-gray-200 rounded" title="Copier la référence"
+                    onClick={() => handleCopy(produit.reference!, 'reference')}>
+                    {copied === 'reference' ? <Check className="w-3 h-3 text-green-600" /> : <Copy className="w-3 h-3 text-gray-500" />}
+                  </button>
+                )}
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="font-semibold">EAN13 :</span> {produit.ean13}
+                {produit.ean13 && (
+                  <button type="button" className="ml-1 p-1 hover:bg-gray-200 rounded" title="Copier l'EAN13"
+                    onClick={() => handleCopy(produit.ean13!, 'ean13')}>
+                    {copied === 'ean13' ? <Check className="w-3 h-3 text-green-600" /> : <Copy className="w-3 h-3 text-gray-500" />}
+                  </button>
+                )}
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="font-semibold">ID Produit :</span> {produit.id_product}
+                <button type="button" className="ml-1 p-1 hover:bg-gray-200 rounded" title="Copier l'ID Produit"
+                  onClick={() => handleCopy(produit.id_product, 'id_product')}>
+                  {copied === 'id_product' ? <Check className="w-3 h-3 text-green-600" /> : <Copy className="w-3 h-3 text-gray-500" />}
+                </button>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="font-semibold">Statut :</span>
+                <span className={`px-3 py-1 rounded-full text-white text-xs font-bold ${produit.status === "Actif" ? "bg-green-600" : "bg-red-600"}`}>{produit.status === "Actif" ? "OUI" : "NON"}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="font-semibold">Médicament OTC :</span>
+                <span className={`px-3 py-1 rounded-full text-white text-xs font-bold ${produit.usage_advice ? "bg-green-600" : "bg-red-600"}`}>{produit.usage_advice ? "OUI" : "NON"}</span>
+              </div>
+              <div><span className="font-semibold">ID Site :</span> {produit.id_site}</div>
+              <div>
+                <span className="font-semibold">Lien produit :</span> {produit.url && (
+                  <Link href={produit.url} target="_blank" className="text-blue-600 underline ml-1">Voir la page</Link>
+                )}
+              </div>
+              <div>
+                <span className="font-semibold">Dates :</span>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <span className="text-sm text-muted-foreground">Créé le</span>
+                    <p>{format(new Date(produit.created_at), "dd/MM/yyyy HH:mm", { locale: fr })}</p>
+                  </div>
+                  <div>
+                    <span className="text-sm text-muted-foreground">Mis à jour le</span>
+                    <p>{format(new Date(produit.updated_at), "dd/MM/yyyy HH:mm", { locale: fr })}</p>
                   </div>
                 </div>
               </div>
             </CardContent>
-            <CardFooter>
-              <Button variant="outline" className="w-full">
-                <FileDown className="mr-2 h-4 w-4" />
-                Exporter CSV
-              </Button>
-            </CardFooter>
           </Card>
-        </TabsContent>
 
-        <TabsContent value="categories" className="mt-6">
+          {/* Bloc Descriptions */}
           <Card>
             <CardHeader>
-              <CardTitle>Gestion des catégories</CardTitle>
-              <CardDescription>Associez le produit à des catégories</CardDescription>
+              <CardTitle>Descriptions</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-6">
-              <div>
-                <h3 className="font-semibold mb-2">Catégorie principale</h3>
-                <select
-                  className="w-full rounded-md border border-input bg-background px-3 py-2"
-                  value={produit.category_default || ""}
-                  readOnly
-                >
-                  <option value="">Sélectionner une catégorie</option>
-                  <option value="Électronique">Électronique</option>
-                  <option value="Accessoires">Accessoires</option>
-                  <option value="Audio">Audio</option>
-                </select>
-              </div>
+            <CardContent className="space-y-2">
+              <div><span className="font-semibold">Description courte :</span> {produit.short_description}</div>
+              <div><span className="font-semibold">Description longue :</span> {produit.long_description}</div>
+            </CardContent>
+          </Card>
 
-              <div>
-                <h3 className="font-semibold mb-2">Catégories secondaires</h3>
-                <div className="space-y-2">
-                  <div>
-                    <label className="text-sm text-muted-foreground">Catégorie 1</label>
-                    <select
-                      className="w-full mt-1 rounded-md border border-input bg-background px-3 py-2"
-                      value={produit.category_1 || ""}
-                      readOnly
-                    >
-                      <option value="">Sélectionner une catégorie</option>
-                      <option value="Smartphones">Smartphones</option>
-                      <option value="Tablettes">Tablettes</option>
-                      <option value="Ordinateurs">Ordinateurs</option>
-                    </select>
-                  </div>
+          {/* Bloc Composition & Conseils */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Composition & Conseils</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              <div><span className="font-semibold">Composition :</span> {produit.composition}</div>
+              <div><span className="font-semibold">Conseils d'utilisation :</span> {produit.long_description || "-"}</div>
+            </CardContent>
+          </Card>
+        </div>
 
-                  <div>
-                    <label className="text-sm text-muted-foreground">Catégorie 2</label>
-                    <select
-                      className="w-full mt-1 rounded-md border border-input bg-background px-3 py-2"
-                      value={produit.category_2 || ""}
-                      readOnly
-                    >
-                      <option value="">Sélectionner une catégorie</option>
-                      <option value="Haut de gamme">Haut de gamme</option>
-                      <option value="Milieu de gamme">Milieu de gamme</option>
-                      <option value="Entrée de gamme">Entrée de gamme</option>
-                    </select>
-                  </div>
+        {/* Colonne droite : stock, catégories, prix */}
+        <div className="md:col-span-4 space-y-6">
+          {/* Bloc Stock & vente */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Stock & vente</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              <div><span className="font-semibold">Quantité en stock :</span> {produit.quantity}</div>
+              <div><span className="font-semibold">Poids :</span> {produit.weight ? `${produit.weight} kg` : "-"}</div>
+              <div><span className="font-semibold">Quantité minimale pour la vente :</span> {produit.min_sale_qty}</div>
+              <div><span className="font-semibold">Quantité maximale pour la vente :</span> {produit.max_sale_qty}</div>
+            </CardContent>
+          </Card>
 
-                  <div>
-                    <label className="text-sm text-muted-foreground">Catégorie 3</label>
-                    <select
-                      className="w-full mt-1 rounded-md border border-input bg-background px-3 py-2"
-                      value={produit.category_3 || ""}
-                      readOnly
-                    >
-                      <option value="">Sélectionner une catégorie</option>
-                      <option value="Nouveautés">Nouveautés</option>
-                      <option value="Promotions">Promotions</option>
-                      <option value="Meilleures ventes">Meilleures ventes</option>
-                    </select>
-                  </div>
-                </div>
+          {/* Bloc Catégories */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Catégories</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-x-2 mt-1">
+                {produit.category_default && (
+                  <Badge variant="outline" className="bg-primary/10 text-primary">
+                    {produit.category_default}
+                  </Badge>
+                )}
+                {produit.category_1 && <Badge variant="outline">{produit.category_1}</Badge>}
+                {produit.category_2 && <Badge variant="outline">{produit.category_2}</Badge>}
+                {produit.category_3 && <Badge variant="outline">{produit.category_3}</Badge>}
+                {produit.category_4 && <Badge variant="outline">{produit.category_4}</Badge>}
+                {produit.category_5 && <Badge variant="outline">{produit.category_5}</Badge>}
               </div>
             </CardContent>
-            <CardFooter>
-              <Button variant="outline" className="w-full">
-                <FileDown className="mr-2 h-4 w-4" />
-                Exporter CSV
-              </Button>
-            </CardFooter>
           </Card>
-        </TabsContent>
-      </Tabs>
+
+          {/* Bloc Prix & Promotions */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Prix & Promotions</CardTitle>
+              <CardDescription>Informations tarifaires et promotions</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <div className="flex justify-between items-center">
+                  <span>Prix HT</span>
+                  <span className="font-bold">
+                    {new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }).format(produit.price_excl_tax)}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span>Prix TTC</span>
+                  <span className="font-bold">
+                    {new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }).format(produit.price)}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span>Prix d'achat</span>
+                  <span className="font-bold">
+                    {new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }).format(produit.purchase_price)}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span>TVA</span>
+                  <span>{produit.tax_value}%</span>
+                </div>
+              </div>
+              <div className="space-y-2">
+                {produit.is_discounted ? (
+                  <>
+                    <div className="flex justify-between items-center">
+                      <span>Prix promotionnel</span>
+                      <span className="font-bold text-red-600">
+                        {new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }).format(produit.promo_price)}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span>Réduction</span>
+                      <span className="text-red-600">
+                        -{Math.round((1 - produit.promo_price / produit.price) * 100)}%
+                      </span>
+                    </div>
+                    {produit.date_promo_from && produit.date_promo_to && (
+                      <div className="flex justify-between items-center">
+                        <span>Période promo</span>
+                        <span>
+                          du {format(new Date(produit.date_promo_from), "dd/MM/yyyy", { locale: fr })} au {format(new Date(produit.date_promo_to), "dd/MM/yyyy", { locale: fr })}
+                        </span>
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <div className="text-muted-foreground">Aucune promotion en cours</div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
     </div>
   )
 }

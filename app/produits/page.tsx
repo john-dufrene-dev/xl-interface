@@ -9,6 +9,7 @@ import { FilterBar } from "@/components/filter-bar"
 import { useRouter } from "next/navigation"
 import { Badge } from "@/components/ui/badge"
 import { ExportButton } from "@/components/export-button"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 // Types
 type Produit = {
@@ -30,6 +31,7 @@ type Produit = {
   date_promo_to: string | null
   created_at: string
   category_default: string | null
+  status: string
 }
 
 // Données de démonstration
@@ -53,6 +55,7 @@ const produits: Produit[] = [
     date_promo_to: "2023-05-31T23:59:59",
     created_at: "2023-01-15T10:30:00",
     category_default: "Électronique",
+    status: "Actif",
   },
   {
     id: "2",
@@ -73,6 +76,7 @@ const produits: Produit[] = [
     date_promo_to: null,
     created_at: "2023-02-20T14:20:00",
     category_default: "Accessoires",
+    status: "Actif",
   },
   {
     id: "3",
@@ -93,6 +97,7 @@ const produits: Produit[] = [
     date_promo_to: "2023-06-10T23:59:59",
     created_at: "2023-03-13T09:15:00",
     category_default: "Audio",
+    status: "Actif",
   },
   {
     id: "4",
@@ -113,6 +118,7 @@ const produits: Produit[] = [
     date_promo_to: null,
     created_at: "2023-04-12T16:45:00",
     category_default: "Accessoires",
+    status: "Actif",
   },
   {
     id: "5",
@@ -133,6 +139,7 @@ const produits: Produit[] = [
     date_promo_to: null,
     created_at: "2023-05-11T11:10:00",
     category_default: "Électronique",
+    status: "Actif",
   },
 ]
 
@@ -141,16 +148,16 @@ export default function ProduitsPage() {
   const [dateRange, setDateRange] = useState<DateRange | undefined>()
   const [selectedSite, setSelectedSite] = useState("")
   const [globalSearch, setGlobalSearch] = useState("")
+  const [promotionFilter, setPromotionFilter] = useState("all")
+  const [statusFilter, setStatusFilter] = useState("all")
 
-  // Fonction pour réinitialiser les filtres
+  // Fonction pour réinitialiser tous les filtres
   const resetFilters = () => {
-    const today = new Date()
-    const sevenDaysAgo = new Date(today)
-    sevenDaysAgo.setDate(today.getDate() - 6)
-    sevenDaysAgo.setHours(0, 0, 0, 0)
-    today.setHours(23, 59, 59, 999)
-    setDateRange({ from: sevenDaysAgo, to: today })
+    setDateRange({ from: new Date("2000-01-01"), to: new Date("2100-01-01") })
     setSelectedSite("")
+    setPromotionFilter("all")
+    setStatusFilter("all")
+    setGlobalSearch("")
   }
 
   // Initialiser avec les 7 derniers jours au chargement
@@ -241,22 +248,52 @@ export default function ProduitsPage() {
     },
     {
       accessorKey: "is_discounted",
-      header: "Promotion",
-      cell: ({ row }) => {
+      header: () => (
+        <Select value={promotionFilter} onValueChange={setPromotionFilter}>
+          <SelectTrigger className="w-24 h-7 border border-gray-200 bg-white dark:bg-neutral-900 dark:border-neutral-800 rounded-md px-2 py-0 text-xs font-normal text-foreground focus:ring-0 focus:outline-none shadow-none hover:border-gray-300">
+            <SelectValue placeholder="Promotion" />
+          </SelectTrigger>
+          <SelectContent>
+            {promoOptions.map(opt => (
+              <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      ),
+      cell: ({ row }: { row: any }) => {
         const isDiscounted = row.getValue("is_discounted")
         return isDiscounted ? (
-          <Badge className="bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300">En promotion</Badge>
+          <Badge className="bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300">Oui</Badge>
         ) : (
-          <Badge variant="outline" className="bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300">
-            Prix normal
-          </Badge>
+          <Badge variant="outline" className="bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300">Non</Badge>
+        )
+      },
+    },
+    {
+      accessorKey: "status",
+      header: () => (
+        <Select value={statusFilter} onValueChange={setStatusFilter}>
+          <SelectTrigger className="w-24 h-7 border border-gray-200 bg-white dark:bg-neutral-900 dark:border-neutral-800 rounded-md px-2 py-0 text-xs font-normal text-foreground focus:ring-0 focus:outline-none shadow-none hover:border-gray-300">
+            <SelectValue placeholder="Statut" />
+          </SelectTrigger>
+          <SelectContent>
+            {statusOptions.map(opt => (
+              <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      ),
+      cell: ({ row }: { row: any }) => {
+        const status = row.getValue("status")
+        return (
+          <span className={`px-2 py-1 rounded-full text-white text-xs font-bold ${status === "Actif" ? "bg-green-600" : "bg-red-600"}`}>{status === "Actif" ? "OUI" : "NON"}</span>
         )
       },
     },
     {
       accessorKey: "id_site",
       header: "Site",
-      cell: ({ row }) => {
+      cell: ({ row }: { row: any }) => {
         const siteId = row.getValue("id_site")
         return <div>{`Site ${siteId}`}</div>
       },
@@ -277,12 +314,32 @@ export default function ProduitsPage() {
   // Modifier la fonction de filtrage pour ne pas filtrer par date dans les données de démonstration
   // Filtrer les données en fonction des filtres sélectionnés
   const filteredData = produits.filter((produit) => {
-    let matchesSite = true
+    let matchesSiteGlobal = true
+    let matchesDate = true
+    let matchesPromotion = true
+    let matchesStatus = true
     let matchesGlobal = true
 
+    // Filtre site global (FilterBar)
     if (selectedSite) {
-      matchesSite = produit.id_site === selectedSite
+      matchesSiteGlobal = produit.id_site === selectedSite
     }
+    // Filtre date (FilterBar)
+    if (dateRange && dateRange.from && dateRange.to) {
+      const created = new Date(produit.created_at)
+      matchesDate = created >= dateRange.from && created <= dateRange.to
+    } else {
+      matchesDate = true;
+    }
+    // Filtre promotion colonne
+    if (promotionFilter !== "all") {
+      matchesPromotion = promotionFilter === "oui" ? produit.is_discounted : !produit.is_discounted
+    }
+    // Filtre statut colonne
+    if (statusFilter !== "all") {
+      matchesStatus = statusFilter === "oui" ? produit.status === "Actif" : produit.status !== "Actif"
+    }
+    // Recherche globale
     if (globalSearch) {
       const search = globalSearch.toLowerCase()
       matchesGlobal = (
@@ -291,8 +348,19 @@ export default function ProduitsPage() {
         (produit.category_default && produit.category_default.toLowerCase().includes(search))
       )
     }
-    return matchesSite && matchesGlobal
+    return matchesSiteGlobal && matchesDate && matchesPromotion && matchesStatus && matchesGlobal
   })
+
+  const statusOptions = [
+    { value: "all", label: "Tous" },
+    { value: "oui", label: "Oui" },
+    { value: "non", label: "Non" },
+  ]
+  const promoOptions = [
+    { value: "all", label: "Toutes" },
+    { value: "oui", label: "Oui" },
+    { value: "non", label: "Non" },
+  ]
 
   return (
     <div className="space-y-4">
