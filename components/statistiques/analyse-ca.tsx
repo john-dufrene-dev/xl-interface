@@ -1203,7 +1203,16 @@ export default function AnalyseCA() {
                         stroke={COLORS[0]}
                         activeDot={{ r: 8 }}
                         strokeWidth={2}
-                      />
+                      >
+                        <LabelList
+                          dataKey="2024"
+                          position="bottom"
+                          fontSize={12}
+                          fontWeight={600}
+                          fill={COLORS[0]}
+                          formatter={(value: number) => value.toLocaleString("fr-FR")}
+                        />
+                      </Line>
                       <Line
                         type="monotone"
                         dataKey="2025"
@@ -1211,7 +1220,16 @@ export default function AnalyseCA() {
                         stroke={COLORS[1]}
                         activeDot={{ r: 8 }}
                         strokeWidth={2}
-                      />
+                      >
+                        <LabelList
+                          dataKey="2025"
+                          position="top"
+                          fontSize={12}
+                          fontWeight={600}
+                          fill={COLORS[1]}
+                          formatter={(value: number) => value.toLocaleString("fr-FR")}
+                        />
+                      </Line>
                     </LineChart>
                   </ResponsiveContainer>
                 </div>
@@ -1269,7 +1287,16 @@ export default function AnalyseCA() {
                         stroke={COLORS[0]}
                         activeDot={{ r: 8 }}
                         strokeWidth={2}
-                      />
+                      >
+                        <LabelList
+                          dataKey="2024"
+                          position="bottom"
+                          fontSize={12}
+                          fontWeight={600}
+                          fill={COLORS[0]}
+                          formatter={(value: number) => value.toLocaleString("fr-FR")}
+                        />
+                      </Line>
                       <Line
                         type="monotone"
                         dataKey="2025"
@@ -1277,7 +1304,16 @@ export default function AnalyseCA() {
                         stroke={COLORS[1]}
                         activeDot={{ r: 8 }}
                         strokeWidth={2}
-                      />
+                      >
+                        <LabelList
+                          dataKey="2025"
+                          position="top"
+                          fontSize={12}
+                          fontWeight={600}
+                          fill={COLORS[1]}
+                          formatter={(value: number) => value.toLocaleString("fr-FR")}
+                        />
+                      </Line>
                     </LineChart>
                   </ResponsiveContainer>
                 </div>
@@ -1335,7 +1371,16 @@ export default function AnalyseCA() {
                         stroke={COLORS[0]}
                         activeDot={{ r: 8 }}
                         strokeWidth={2}
-                      />
+                      >
+                        <LabelList
+                          dataKey="2024"
+                          position="bottom"
+                          fontSize={12}
+                          fontWeight={600}
+                          fill={COLORS[0]}
+                          formatter={(value: number) => value.toLocaleString("fr-FR")}
+                        />
+                      </Line>
                       <Line
                         type="monotone"
                         dataKey="2025"
@@ -1343,7 +1388,16 @@ export default function AnalyseCA() {
                         stroke={COLORS[1]}
                         activeDot={{ r: 8 }}
                         strokeWidth={2}
-                      />
+                      >
+                        <LabelList
+                          dataKey="2025"
+                          position="top"
+                          fontSize={12}
+                          fontWeight={600}
+                          fill={COLORS[1]}
+                          formatter={(value: number) => value.toLocaleString("fr-FR")}
+                        />
+                      </Line>
                     </LineChart>
                   </ResponsiveContainer>
                 </div>
@@ -1364,7 +1418,12 @@ export default function AnalyseCA() {
                 <div className="h-[350px]">
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart
-                      data={donneesEvolutionCA}
+                      data={donneesEvolutionCA.map(jour => ({
+                        ...jour,
+                        ventesItek: donneesCA
+                          .filter(d => format(new Date(d.date), "dd/MM", { locale: fr }) === jour.date)
+                          .reduce((acc, curr) => acc + curr.ventesItek, 0),
+                      }))}
                       margin={{
                         top: 5,
                         right: 10,
@@ -1395,7 +1454,14 @@ export default function AnalyseCA() {
                         dataKey="nbCommandes"
                         name="Nombre de commandes"
                         fill={COLORS[3]}
-                        barSize={30}
+                        barSize={20}
+                      />
+                      <Bar
+                        yAxisId="left"
+                        dataKey="ventesItek"
+                        name="Nombre de commandes ITEK"
+                        fill={COLORS[0]}
+                        barSize={20}
                       />
                       <Line
                         yAxisId="right"
@@ -2221,7 +2287,16 @@ export default function AnalyseCA() {
                         stroke={COLORS[0]}
                         activeDot={{ r: 8 }}
                         strokeWidth={2}
-                      />
+                      >
+                        <LabelList
+                          dataKey="2024"
+                          position="bottom"
+                          fontSize={12}
+                          fontWeight={600}
+                          fill={COLORS[0]}
+                          formatter={(value: number) => value.toLocaleString("fr-FR")}
+                        />
+                      </Line>
                       <Line
                         type="monotone"
                         dataKey="2025"
@@ -2229,7 +2304,16 @@ export default function AnalyseCA() {
                         stroke={COLORS[1]}
                         activeDot={{ r: 8 }}
                         strokeWidth={2}
-                      />
+                      >
+                        <LabelList
+                          dataKey="2025"
+                          position="top"
+                          fontSize={12}
+                          fontWeight={600}
+                          fill={COLORS[1]}
+                          formatter={(value: number) => value.toLocaleString("fr-FR")}
+                        />
+                      </Line>
                     </LineChart>
                   </ResponsiveContainer>
                 </div>
@@ -2954,7 +3038,16 @@ export default function AnalyseCA() {
                       stroke="#8884d8"
                       activeDot={{ r: 8 }}
                       strokeWidth={2}
-                    />
+                    >
+                      <LabelList
+                        dataKey="2024"
+                        position="bottom"
+                        fontSize={12}
+                        fontWeight={600}
+                        fill="#8884d8"
+                        formatter={(value: number) => value.toLocaleString("fr-FR")}
+                      />
+                    </Line>
                     <Line
                       type="monotone"
                       dataKey="2025"
@@ -2962,7 +3055,16 @@ export default function AnalyseCA() {
                       stroke="#82ca9d"
                       activeDot={{ r: 8 }}
                       strokeWidth={2}
-                    />
+                    >
+                      <LabelList
+                        dataKey="2025"
+                        position="top"
+                        fontSize={12}
+                        fontWeight={600}
+                        fill="#82ca9d"
+                        formatter={(value: number) => value.toLocaleString("fr-FR")}
+                      />
+                    </Line>
                   </LineChart>
                 </ResponsiveContainer>
               </div>
@@ -3484,7 +3586,16 @@ export default function AnalyseCA() {
                       stroke={COLORS[0]}
                       activeDot={{ r: 8 }}
                       strokeWidth={2}
-                    />
+                    >
+                      <LabelList
+                        dataKey="caHTSansLivraison"
+                        position="bottom"
+                        fontSize={12}
+                        fontWeight={600}
+                        fill={COLORS[0]}
+                        formatter={(value: number) => value.toLocaleString("fr-FR")}
+                      />
+                    </Line>
                     <Line
                       type="monotone"
                       dataKey="caLivraison"
@@ -3492,7 +3603,16 @@ export default function AnalyseCA() {
                       stroke={COLORS[1]}
                       activeDot={{ r: 8 }}
                       strokeWidth={2}
-                    />
+                    >
+                      <LabelList
+                        dataKey="caLivraison"
+                        position="top"
+                        fontSize={12}
+                        fontWeight={600}
+                        fill={COLORS[1]}
+                        formatter={(value: number) => value.toLocaleString("fr-FR")}
+                      />
+                    </Line>
                   </LineChart>
                 </ResponsiveContainer>
               </div>
