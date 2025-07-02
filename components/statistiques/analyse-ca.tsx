@@ -21,6 +21,7 @@ import {
   PieChart,
   Pie,
   Cell,
+  LabelList,
 } from "recharts"
 import { FilterBar } from "@/components/filter-bar"
 import { ExportButton } from "@/components/export-button"
@@ -983,7 +984,7 @@ export default function AnalyseCA() {
                 <div className="flex items-center justify-between">
                   <div>
                     <CardTitle>PART DES FRAIS DE PORT DANS LE CA HT GLOBAL</CardTitle>
-                    <CardDescription>Analyse par marketplace</CardDescription>
+                    <CardDescription>Analyse CA</CardDescription>
                   </div>
                   <ExportButton />
                 </div>
@@ -993,62 +994,14 @@ export default function AnalyseCA() {
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart
                       data={[
-                        {
-                          name: "Amazon",
-                          ca: totauxGlobaux.totalCAHT * 0.35 * 0.97,
-                          fraisLivraison: totauxGlobaux.totalCAHT * 0.35 * 0.03,
-                          total: totauxGlobaux.totalCAHT * 0.35,
-                          pourcentage: "3%",
-                          fill: "#FF9900",
-                        },
-                        {
-                          name: "Cdiscount",
-                          ca: totauxGlobaux.totalCAHT * 0.25 * 0.98,
-                          fraisLivraison: totauxGlobaux.totalCAHT * 0.25 * 0.02,
-                          total: totauxGlobaux.totalCAHT * 0.25,
-                          pourcentage: "2%",
-                          fill: "#00AE42",
-                        },
-                        {
-                          name: "DocMorris",
-                          ca: totauxGlobaux.totalCAHT * 0.15 * 0.98,
-                          fraisLivraison: totauxGlobaux.totalCAHT * 0.15 * 0.02,
-                          total: totauxGlobaux.totalCAHT * 0.15,
-                          pourcentage: "2%",
-                          fill: "#FF6B00",
-                        },
-                        {
-                          name: "TikTok",
-                          ca: totauxGlobaux.totalCAHT * 0.08 * 0.97,
-                          fraisLivraison: totauxGlobaux.totalCAHT * 0.08 * 0.03,
-                          total: totauxGlobaux.totalCAHT * 0.08,
-                          pourcentage: "3%",
-                          fill: "#000000",
-                        },
-                        {
-                          name: "SHEIN",
-                          ca: totauxGlobaux.totalCAHT * 0.07 * 0.975,
-                          fraisLivraison: totauxGlobaux.totalCAHT * 0.07 * 0.025,
-                          total: totauxGlobaux.totalCAHT * 0.07,
-                          pourcentage: "2,5%",
-                          fill: "#E60279",
-                        },
-                        {
-                          name: "LCDP",
-                          ca: totauxGlobaux.totalCAHT * 0.06 * 0.97,
-                          fraisLivraison: totauxGlobaux.totalCAHT * 0.06 * 0.03,
-                          total: totauxGlobaux.totalCAHT * 0.06,
-                          pourcentage: "3%",
-                          fill: "#4A90E2",
-                        },
-                        {
-                          name: "Autres",
-                          ca: totauxGlobaux.totalCAHT * 0.04 * 0.97,
-                          fraisLivraison: totauxGlobaux.totalCAHT * 0.04 * 0.03,
-                          total: totauxGlobaux.totalCAHT * 0.04,
-                          pourcentage: "3%",
-                          fill: "#9B9B9B",
-                        },
+                        { name: "CA Itek", ca: totauxGlobaux.totalCAItek, fraisLivraison: totauxGlobaux.totalCAItek * (totauxGlobaux.totalCALivraison / totauxGlobaux.totalCAHT), total: totauxGlobaux.totalCAItek, pourcentage: ((totauxGlobaux.totalCAItek / totauxGlobaux.totalCAHT) * 100).toFixed(1) + "%", fill: "#8B5CF6", fillClair: "#E6DEFA" },
+                        { name: "Amazon", ca: totauxGlobaux.totalCAHT * 0.35 * 0.97, fraisLivraison: totauxGlobaux.totalCAHT * 0.35 * 0.03 * 4, total: totauxGlobaux.totalCAHT * 0.35, pourcentage: "3%", fill: "#FF9900", fillClair: "#FFD580" },
+                        { name: "Cdiscount", ca: totauxGlobaux.totalCAHT * 0.25 * 0.98, fraisLivraison: totauxGlobaux.totalCAHT * 0.25 * 0.02 * 16, total: totauxGlobaux.totalCAHT * 0.25, pourcentage: "2%", fill: "#00AE42", fillClair: "#A8E6B1" },
+                        { name: "DocMorris", ca: totauxGlobaux.totalCAHT * 0.15 * 0.98, fraisLivraison: totauxGlobaux.totalCAHT * 0.15 * 0.02 * 16, total: totauxGlobaux.totalCAHT * 0.15, pourcentage: "2%", fill: "#FF6B00", fillClair: "#FFD1B3" },
+                        { name: "TikTok", ca: totauxGlobaux.totalCAHT * 0.08 * 0.97, fraisLivraison: totauxGlobaux.totalCAHT * 0.08 * 0.03 * 16, total: totauxGlobaux.totalCAHT * 0.08, pourcentage: "3%", fill: "#000000", fillClair: "#B0B0B0" },
+                        { name: "SHEIN", ca: totauxGlobaux.totalCAHT * 0.07 * 0.975, fraisLivraison: totauxGlobaux.totalCAHT * 0.07 * 0.025 * 16, total: totauxGlobaux.totalCAHT * 0.07, pourcentage: "2,5%", fill: "#E60279", fillClair: "#F7B6D2" },
+                        { name: "LCDP", ca: totauxGlobaux.totalCAHT * 0.06 * 0.97, fraisLivraison: totauxGlobaux.totalCAHT * 0.06 * 0.03 * 16, total: totauxGlobaux.totalCAHT * 0.06, pourcentage: "3%", fill: "#4A90E2", fillClair: "#B3D1F7" },
+                        { name: "Autres", ca: totauxGlobaux.totalCAHT * 0.04 * 0.97, fraisLivraison: totauxGlobaux.totalCAHT * 0.04 * 0.03 * 16, total: totauxGlobaux.totalCAHT * 0.04, pourcentage: "3%", fill: "#9B9B9B", fillClair: "#D3D3D3" },
                       ]}
                       margin={{
                         top: 30,
@@ -1059,7 +1012,14 @@ export default function AnalyseCA() {
                       barSize={60}
                     >
                       <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                      <XAxis dataKey="name" scale="point" padding={{ left: 40, right: 40 }} />
+                      <XAxis
+                        dataKey="name"
+                        scale="point"
+                        padding={{ left: 40, right: 40 }}
+                        interval={0}
+                        tick={{ fontSize: 10, fill: "#888" }}
+                        axisLine={false}
+                      />
                       <YAxis
                         tickFormatter={(value) =>
                           new Intl.NumberFormat("fr-FR", {
@@ -1071,24 +1031,28 @@ export default function AnalyseCA() {
                         }
                       />
                       <Tooltip
-                        formatter={(value, name, props) => {
-                          if (name === "ca") {
-                            return [
-                              new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }).format(
-                                value as number,
-                              ),
-                              "CA HT",
-                            ]
-                          }
-                          if (name === "fraisLivraison") {
-                            return [
-                              new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }).format(
-                                value as number,
-                              ),
-                              "Frais de livraison",
-                            ]
-                          }
-                          return [value, name]
+                        content={({ active, payload, label }) => {
+                          if (!active || !payload || payload.length === 0) return null;
+                          const data = payload[0].payload;
+                          const total = (data.ca || 0) + (data.fraisLivraison || 0);
+                          const ca = Math.round(data.ca || 0);
+                          const frais = Math.round(data.fraisLivraison || 0);
+                          const caPct = total > 0 ? Math.round((ca / total) * 100) : 0;
+                          const fraisPct = total > 0 ? Math.round((frais / total) * 100) : 0;
+                          // Couleurs de la légende
+                          const caColor = '#EF4444'; // rouge
+                          const fraisColor = '#000000'; // noir
+                          return (
+                            <div style={{ background: '#fff', border: '1px solid #ddd', borderRadius: 8, padding: 16, fontSize: 15, minWidth: 180 }}>
+                              <div style={{ fontWeight: 600, marginBottom: 8 }}>{data.name}</div>
+                              <div style={{ color: caColor, fontWeight: 600 }}>
+                                CA HT : {ca.toLocaleString('fr-FR')} € <span style={{ color: '#888', fontWeight: 400 }}>({caPct}%)</span>
+                              </div>
+                              <div style={{ color: fraisColor, fontWeight: 600 }}>
+                                Frais Livraison : {frais.toLocaleString('fr-FR')} € <span style={{ color: '#888', fontWeight: 400 }}>({fraisPct}%)</span>
+                              </div>
+                            </div>
+                          );
                         }}
                       />
                       <Legend
@@ -1106,110 +1070,81 @@ export default function AnalyseCA() {
                           </div>
                         )}
                       />
-                      <Bar
-                        dataKey="ca"
-                        stackId="a"
-                        fill="#e74c3c"
-                        name="CA HT"
-                        label={(props: any) => {
-                          const { x, y, width, payload } = props
-                          if (!payload || !x || !y || !width) return <></>
-                          const total = payload.ca + payload.fraisLivraison
-                          return (
-                            <text x={x} y={y} fill="#666" textAnchor="middle" dy={-6}>
-                              {new Intl.NumberFormat("fr-FR", {
-                                style: "currency",
-                                currency: "EUR",
-                                maximumFractionDigits: 0,
-                              }).format(total)}
-                            </text>
-                          )
-                        }}
-                      />
-                      <Bar
-                        dataKey="fraisLivraison"
-                        stackId="a"
-                        fill="#000"
-                        name="Frais Livraison"
-                        label={(props: any) => {
-                          const { x, y, width, payload } = props
-                          if (!payload || !x || !y || !width) return <></>
-                          const pourcentage =
-                            payload.pourcentage ||
-                            ((payload.fraisLivraison / (payload.ca + payload.fraisLivraison)) * 100).toFixed(1) + "%"
-                          return (
-                            <text x={x} y={y} fill="#e74c3c" textAnchor="middle" dominantBaseline="middle" fontWeight="bold" fontSize={14}>
-                              {pourcentage}
-                            </text>
-                          )
-                        }}
-                      />
+                      <Bar dataKey="ca" stackId="a" name="CA HT" isAnimationActive={false}>
+                        {[
+                          "#8B5CF6", "#FF9900", "#00AE42", "#FF6B00", "#000000", "#E60279", "#4A90E2", "#9B9B9B"
+                        ].map((color, index) => (
+                          <Cell key={`cell-ca-${index}`} fill={color} />
+                        ))}
+                      </Bar>
+                      <Bar dataKey="fraisLivraison" stackId="a" name="Frais Livraison" isAnimationActive={false}>
+                        {[
+                          "#E6DEFA", "#FFD580", "#A8E6B1", "#FFD1B3", "#B0B0B0", "#F7B6D2", "#B3D1F7", "#D3D3D3"
+                        ].map((color, index) => (
+                          <Cell key={`cell-frais-${index}`} fill={color} />
+                        ))}
+                      </Bar>
                     </BarChart>
                   </ResponsiveContainer>
                 </div>
-                <div className="mt-4 grid grid-cols-7 gap-2 text-xs">
+                <div className="mt-4 grid grid-cols-4 gap-2 text-xs">
                   <div className="text-center">
-                    <div className="text-sm font-medium text-muted-foreground">AMAZON</div>
-                    <div className="text-sm font-bold">
-                      {new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }).format(
-                        totauxGlobaux.totalCAHT * 0.35,
-                      )}
+                    <div className="flex justify-center items-baseline gap-2">
+                      <span className="text-sm font-medium text-muted-foreground">AMAZON</span>
+                      <span className="text-sm font-bold">{Math.round(totauxGlobaux.totalCAHT * 0.35).toLocaleString('fr-FR')} €</span>
                     </div>
-                    <div className="text-xs text-muted-foreground">35% du CA HT total</div>
+                    <div className="text-xs text-muted-foreground">{((totauxGlobaux.totalCALivraison / totauxGlobaux.totalCAHT) * 100).toFixed(1)}% de frais de livraison</div>
                   </div>
                   <div className="text-center">
-                    <div className="text-sm font-medium text-muted-foreground">CDISCOUNT</div>
-                    <div className="text-sm font-bold">
-                      {new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }).format(
-                        totauxGlobaux.totalCAHT * 0.25,
-                      )}
+                    <div className="flex justify-center items-baseline gap-2">
+                      <span className="text-sm font-medium text-muted-foreground">CDISCOUNT</span>
+                      <span className="text-sm font-bold">{Math.round(totauxGlobaux.totalCAHT * 0.25).toLocaleString('fr-FR')} €</span>
                     </div>
-                    <div className="text-xs text-muted-foreground">25% du CA HT total</div>
+                    <div className="text-xs text-muted-foreground">{((totauxGlobaux.totalCALivraison / totauxGlobaux.totalCAHT) * 100).toFixed(1)}% de frais de livraison</div>
                   </div>
                   <div className="text-center">
-                    <div className="text-sm font-medium text-muted-foreground">DOCMORRIS</div>
-                    <div className="text-sm font-bold">
-                      {new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }).format(
-                        totauxGlobaux.totalCAHT * 0.15,
-                      )}
+                    <div className="flex justify-center items-baseline gap-2">
+                      <span className="text-sm font-medium text-muted-foreground">DOCMORRIS</span>
+                      <span className="text-sm font-bold">{Math.round(totauxGlobaux.totalCAHT * 0.15).toLocaleString('fr-FR')} €</span>
                     </div>
-                    <div className="text-xs text-muted-foreground">15% du CA HT total</div>
+                    <div className="text-xs text-muted-foreground">{((totauxGlobaux.totalCALivraison / totauxGlobaux.totalCAHT) * 100).toFixed(1)}% de frais de livraison</div>
                   </div>
                   <div className="text-center">
-                    <div className="text-sm font-medium text-muted-foreground">TIKTOK</div>
-                    <div className="text-sm font-bold">
-                      {new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }).format(
-                        totauxGlobaux.totalCAHT * 0.08,
-                      )}
+                    <div className="flex justify-center items-baseline gap-2">
+                      <span className="text-sm font-medium text-muted-foreground">TIKTOK</span>
+                      <span className="text-sm font-bold">{Math.round(totauxGlobaux.totalCAHT * 0.08).toLocaleString('fr-FR')} €</span>
                     </div>
-                    <div className="text-xs text-muted-foreground">8% du CA HT total</div>
+                    <div className="text-xs text-muted-foreground">{((totauxGlobaux.totalCALivraison / totauxGlobaux.totalCAHT) * 100).toFixed(1)}% de frais de livraison</div>
+                  </div>
+                </div>
+                <div className="mt-2 grid grid-cols-4 gap-2 text-xs">
+                  <div className="text-center">
+                    <div className="flex justify-center items-baseline gap-2">
+                      <span className="text-sm font-medium text-muted-foreground">SHEIN</span>
+                      <span className="text-sm font-bold">{Math.round(totauxGlobaux.totalCAHT * 0.07).toLocaleString('fr-FR')} €</span>
+                    </div>
+                    <div className="text-xs text-muted-foreground">{((totauxGlobaux.totalCALivraison / totauxGlobaux.totalCAHT) * 100).toFixed(1)}% de frais de livraison</div>
                   </div>
                   <div className="text-center">
-                    <div className="text-sm font-medium text-muted-foreground">SHEIN</div>
-                    <div className="text-sm font-bold">
-                      {new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }).format(
-                        totauxGlobaux.totalCAHT * 0.07,
-                      )}
+                    <div className="flex justify-center items-baseline gap-2">
+                      <span className="text-sm font-medium text-muted-foreground">LCDP</span>
+                      <span className="text-sm font-bold">{Math.round(totauxGlobaux.totalCAHT * 0.06).toLocaleString('fr-FR')} €</span>
                     </div>
-                    <div className="text-xs text-muted-foreground">7% du CA HT total</div>
+                    <div className="text-xs text-muted-foreground">{((totauxGlobaux.totalCALivraison / totauxGlobaux.totalCAHT) * 100).toFixed(1)}% de frais de livraison</div>
                   </div>
                   <div className="text-center">
-                    <div className="text-sm font-medium text-muted-foreground">LCDP</div>
-                    <div className="text-sm font-bold">
-                      {new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }).format(
-                        totauxGlobaux.totalCAHT * 0.06,
-                      )}
+                    <div className="flex justify-center items-baseline gap-2">
+                      <span className="text-sm font-medium text-muted-foreground">AUTRES</span>
+                      <span className="text-sm font-bold">{Math.round(totauxGlobaux.totalCAHT * 0.04).toLocaleString('fr-FR')} €</span>
                     </div>
-                    <div className="text-xs text-muted-foreground">6% du CA HT total</div>
+                    <div className="text-xs text-muted-foreground">{((totauxGlobaux.totalCALivraison / totauxGlobaux.totalCAHT) * 100).toFixed(1)}% de frais de livraison</div>
                   </div>
                   <div className="text-center">
-                    <div className="text-sm font-medium text-muted-foreground">AUTRES</div>
-                    <div className="text-sm font-bold">
-                      {new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }).format(
-                        totauxGlobaux.totalCAHT * 0.04,
-                      )}
+                    <div className="flex justify-center items-baseline gap-2">
+                      <span className="text-sm font-medium text-muted-foreground">CA ITEK</span>
+                      <span className="text-sm font-bold">{new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(totauxGlobaux.totalCAItek)}</span>
                     </div>
-                    <div className="text-xs text-muted-foreground">4% du CA HT total</div>
+                    <div className="text-xs text-muted-foreground">{((totauxGlobaux.totalCAItek / totauxGlobaux.totalCAHT) * 100).toFixed(1)}% du CA HT total</div>
                   </div>
                 </div>
               </CardContent>
@@ -1668,6 +1603,15 @@ export default function AnalyseCA() {
                   </div>
                   <div className="text-muted-foreground font-semibold">4%</div>
                 </div>
+                <div className="text-center">
+                  <div className="text-sm font-medium text-muted-foreground">CA ITEK</div>
+                  <div className="text-sm font-bold">
+                    {new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }).format(totauxGlobaux.totalCAItek)}
+                  </div>
+                  <div className="text-xs text-muted-foreground">
+                    {((totauxGlobaux.totalCAItek / totauxGlobaux.totalCAHT) * 100).toFixed(1)}% du CA HT total
+                  </div>
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -1712,13 +1656,13 @@ export default function AnalyseCA() {
                       <TableHead className="text-right bg-green-50">CA HT hors ITEK</TableHead>
                       <TableHead className="text-right bg-green-50">Frais de livraison hors ITEK</TableHead>
                       <TableHead className="text-right bg-green-50">CA HT hors ITEK TOTAL</TableHead>
-                      <TableHead className="text-right bg-green-50">CA HT AMAZON</TableHead>
-                      <TableHead className="text-right bg-green-50">CA HT CDiscount</TableHead>
-                      <TableHead className="text-right bg-green-50">CA HT DocMorris</TableHead>
-                      <TableHead className="text-right bg-green-50">CA HT TIKTOK</TableHead>
-                      <TableHead className="text-right bg-green-50">CA HT SHEIN</TableHead>
-                      <TableHead className="text-right bg-green-50">CA HT LCDP</TableHead>
-                      <TableHead className="text-right bg-green-50">CA HT autres Markets</TableHead>
+                      <TableHead className="text-right bg-blue-100">CA HT AMAZON</TableHead>
+                      <TableHead className="text-right bg-blue-100">CA HT CDiscount</TableHead>
+                      <TableHead className="text-right bg-blue-100">CA HT DocMorris</TableHead>
+                      <TableHead className="text-right bg-blue-100">CA HT TIKTOK</TableHead>
+                      <TableHead className="text-right bg-blue-100">CA HT SHEIN</TableHead>
+                      <TableHead className="text-right bg-blue-100">CA HT LCDP</TableHead>
+                      <TableHead className="text-right bg-blue-100">CA HT autres Markets</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -1794,29 +1738,29 @@ export default function AnalyseCA() {
                                 caHorsITEKTotal,
                               )}
                             </TableCell>
-                            <TableCell className="text-right bg-green-50">
+                            <TableCell className="text-right bg-blue-100">
                               {new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }).format(caAmazon)}
                             </TableCell>
-                            <TableCell className="text-right bg-green-50">
+                            <TableCell className="text-right bg-blue-100">
                               {new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }).format(
                                 caCDiscount,
                               )}
                             </TableCell>
-                            <TableCell className="text-right bg-green-50">
+                            <TableCell className="text-right bg-blue-100">
                               {new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }).format(
                                 caDocMorris,
                               )}
                             </TableCell>
-                            <TableCell className="text-right bg-green-50">
+                            <TableCell className="text-right bg-blue-100">
                               {new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }).format(caTikTok)}
                             </TableCell>
-                            <TableCell className="text-right bg-green-50">
+                            <TableCell className="text-right bg-blue-100">
                               {new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }).format(caShein)}
                             </TableCell>
-                            <TableCell className="text-right bg-green-50">
+                            <TableCell className="text-right bg-blue-100">
                               {new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }).format(caLCDP)}
                             </TableCell>
-                            <TableCell className="text-right bg-green-50">
+                            <TableCell className="text-right bg-blue-100">
                               {new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }).format(
                                 caAutresMarkets,
                               )}
@@ -1939,37 +1883,37 @@ export default function AnalyseCA() {
                                     caHorsITEKTotal,
                                   )}
                                 </TableCell>
-                                <TableCell className="text-right bg-green-50">
+                                <TableCell className="text-right bg-blue-100">
                                   {new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }).format(
                                     caAmazon,
                                   )}
                                 </TableCell>
-                                <TableCell className="text-right bg-green-50">
+                                <TableCell className="text-right bg-blue-100">
                                   {new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }).format(
                                     caCDiscount,
                                   )}
                                 </TableCell>
-                                <TableCell className="text-right bg-green-50">
+                                <TableCell className="text-right bg-blue-100">
                                   {new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }).format(
                                     caDocMorris,
                                   )}
                                 </TableCell>
-                                <TableCell className="text-right bg-green-50">
+                                <TableCell className="text-right bg-blue-100">
                                   {new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }).format(
                                     caTikTok,
                                   )}
                                 </TableCell>
-                                <TableCell className="text-right bg-green-50">
+                                <TableCell className="text-right bg-blue-100">
                                   {new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }).format(
                                     caShein,
                                   )}
                                 </TableCell>
-                                <TableCell className="text-right bg-green-50">
+                                <TableCell className="text-right bg-blue-100">
                                   {new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }).format(
                                     caLCDP,
                                   )}
                                 </TableCell>
-                                <TableCell className="text-right bg-green-50">
+                                <TableCell className="text-right bg-blue-100">
                                   {new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }).format(
                                     caAutresMarkets,
                                   )}
@@ -2088,37 +2032,37 @@ export default function AnalyseCA() {
                                     caHorsITEKTotal,
                                   )}
                                 </TableCell>
-                                <TableCell className="text-right bg-green-50">
+                                <TableCell className="text-right bg-blue-100">
                                   {new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }).format(
                                     caAmazon,
                                   )}
                                 </TableCell>
-                                <TableCell className="text-right bg-green-50">
+                                <TableCell className="text-right bg-blue-100">
                                   {new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }).format(
                                     caCDiscount,
                                   )}
                                 </TableCell>
-                                <TableCell className="text-right bg-green-50">
+                                <TableCell className="text-right bg-blue-100">
                                   {new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }).format(
                                     caDocMorris,
                                   )}
                                 </TableCell>
-                                <TableCell className="text-right bg-green-50">
+                                <TableCell className="text-right bg-blue-100">
                                   {new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }).format(
                                     caTikTok,
                                   )}
                                 </TableCell>
-                                <TableCell className="text-right bg-green-50">
+                                <TableCell className="text-right bg-blue-100">
                                   {new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }).format(
                                     caShein,
                                   )}
                                 </TableCell>
-                                <TableCell className="text-right bg-green-50">
+                                <TableCell className="text-right bg-blue-100">
                                   {new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }).format(
                                     caLCDP,
                                   )}
                                 </TableCell>
-                                <TableCell className="text-right bg-green-50">
+                                <TableCell className="text-right bg-blue-100">
                                   {new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }).format(
                                     caAutresMarkets,
                                   )}
