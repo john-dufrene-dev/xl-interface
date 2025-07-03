@@ -1211,7 +1211,7 @@ export default function AnalyseCA() {
                           fontWeight={600}
                           fill={COLORS[0]}
                           formatter={(value: number) => value.toLocaleString("fr-FR")}
-                        />
+                      />
                       </Line>
                       <Line
                         type="monotone"
@@ -1228,7 +1228,7 @@ export default function AnalyseCA() {
                           fontWeight={600}
                           fill={COLORS[1]}
                           formatter={(value: number) => value.toLocaleString("fr-FR")}
-                        />
+                      />
                       </Line>
                     </LineChart>
                   </ResponsiveContainer>
@@ -1236,6 +1236,7 @@ export default function AnalyseCA() {
               </CardContent>
             </Card>
 
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Card>
               <CardHeader>
                 <div className="flex items-center justify-between">
@@ -1287,16 +1288,16 @@ export default function AnalyseCA() {
                         stroke={COLORS[0]}
                         activeDot={{ r: 8 }}
                         strokeWidth={2}
-                      >
-                        <LabelList
-                          dataKey="2024"
-                          position="bottom"
-                          fontSize={12}
-                          fontWeight={600}
-                          fill={COLORS[0]}
-                          formatter={(value: number) => value.toLocaleString("fr-FR")}
-                        />
-                      </Line>
+                        >
+                          <LabelList
+                            dataKey="2024"
+                            position="bottom"
+                            fontSize={12}
+                            fontWeight={600}
+                            fill={COLORS[0]}
+                            formatter={(value: number) => value.toLocaleString("fr-FR")}
+                      />
+                        </Line>
                       <Line
                         type="monotone"
                         dataKey="2025"
@@ -1304,22 +1305,21 @@ export default function AnalyseCA() {
                         stroke={COLORS[1]}
                         activeDot={{ r: 8 }}
                         strokeWidth={2}
-                      >
-                        <LabelList
-                          dataKey="2025"
-                          position="top"
-                          fontSize={12}
-                          fontWeight={600}
-                          fill={COLORS[1]}
-                          formatter={(value: number) => value.toLocaleString("fr-FR")}
-                        />
-                      </Line>
+                        >
+                          <LabelList
+                            dataKey="2025"
+                            position="top"
+                            fontSize={12}
+                            fontWeight={600}
+                            fill={COLORS[1]}
+                            formatter={(value: number) => value.toLocaleString("fr-FR")}
+                      />
+                        </Line>
                     </LineChart>
                   </ResponsiveContainer>
                 </div>
               </CardContent>
             </Card>
-
             <Card>
               <CardHeader>
                 <div className="flex items-center justify-between">
@@ -1371,16 +1371,16 @@ export default function AnalyseCA() {
                         stroke={COLORS[0]}
                         activeDot={{ r: 8 }}
                         strokeWidth={2}
-                      >
-                        <LabelList
-                          dataKey="2024"
-                          position="bottom"
-                          fontSize={12}
-                          fontWeight={600}
-                          fill={COLORS[0]}
-                          formatter={(value: number) => value.toLocaleString("fr-FR")}
-                        />
-                      </Line>
+                        >
+                          <LabelList
+                            dataKey="2024"
+                            position="bottom"
+                            fontSize={12}
+                            fontWeight={600}
+                            fill={COLORS[0]}
+                            formatter={(value: number) => value.toLocaleString("fr-FR")}
+                      />
+                        </Line>
                       <Line
                         type="monotone"
                         dataKey="2025"
@@ -1388,28 +1388,29 @@ export default function AnalyseCA() {
                         stroke={COLORS[1]}
                         activeDot={{ r: 8 }}
                         strokeWidth={2}
-                      >
-                        <LabelList
-                          dataKey="2025"
-                          position="top"
-                          fontSize={12}
-                          fontWeight={600}
-                          fill={COLORS[1]}
-                          formatter={(value: number) => value.toLocaleString("fr-FR")}
-                        />
-                      </Line>
+                        >
+                          <LabelList
+                            dataKey="2025"
+                            position="top"
+                            fontSize={12}
+                            fontWeight={600}
+                            fill={COLORS[1]}
+                            formatter={(value: number) => value.toLocaleString("fr-FR")}
+                      />
+                        </Line>
                     </LineChart>
                   </ResponsiveContainer>
                 </div>
               </CardContent>
             </Card>
+            </div>
 
             <Card>
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <div>
                     <CardTitle>Évolution des commandes</CardTitle>
-                    <CardDescription>Commandes et panier moyen</CardDescription>
+                    <CardDescription>Commandes CA / ITEK</CardDescription>
                   </div>
                   <ExportButton />
                 </div>
@@ -1455,14 +1456,54 @@ export default function AnalyseCA() {
                         name="Nombre de commandes"
                         fill={COLORS[3]}
                         barSize={20}
-                      />
+                      >
+                        <LabelList
+                          dataKey="nbCommandes"
+                          position="top"
+                          content={({ x, y, width, value }) => {
+                            if (typeof x !== "number" || typeof y !== "number" || typeof width !== "number") return null;
+                            return (
+                              <text
+                                x={x + width / 2}
+                                y={y - 8}
+                                textAnchor="middle"
+                                fontSize={12}
+                                fontWeight={600}
+                                fill={COLORS[3]}
+                              >
+                                {value}
+                              </text>
+                            );
+                          }}
+                        />
+                      </Bar>
                       <Bar
                         yAxisId="left"
                         dataKey="ventesItek"
                         name="Nombre de commandes ITEK"
                         fill={COLORS[0]}
                         barSize={20}
-                      />
+                      >
+                        <LabelList
+                          dataKey="ventesItek"
+                          position="top"
+                          content={({ x, y, width, value }) => {
+                            if (typeof x !== "number" || typeof y !== "number" || typeof width !== "number") return null;
+                            return (
+                              <text
+                                x={x + width / 2}
+                                y={y - 8}
+                                textAnchor="middle"
+                                fontSize={12}
+                                fontWeight={600}
+                                fill={COLORS[0]}
+                              >
+                                {value}
+                              </text>
+                            );
+                          }}
+                        />
+                      </Bar>
                       <Line
                         yAxisId="right"
                         type="monotone"
@@ -2295,7 +2336,7 @@ export default function AnalyseCA() {
                           fontWeight={600}
                           fill={COLORS[0]}
                           formatter={(value: number) => value.toLocaleString("fr-FR")}
-                        />
+                      />
                       </Line>
                       <Line
                         type="monotone"
@@ -2312,7 +2353,7 @@ export default function AnalyseCA() {
                           fontWeight={600}
                           fill={COLORS[1]}
                           formatter={(value: number) => value.toLocaleString("fr-FR")}
-                        />
+                      />
                       </Line>
                     </LineChart>
                   </ResponsiveContainer>
@@ -3046,7 +3087,7 @@ export default function AnalyseCA() {
                         fontWeight={600}
                         fill="#8884d8"
                         formatter={(value: number) => value.toLocaleString("fr-FR")}
-                      />
+                    />
                     </Line>
                     <Line
                       type="monotone"
@@ -3063,7 +3104,7 @@ export default function AnalyseCA() {
                         fontWeight={600}
                         fill="#82ca9d"
                         formatter={(value: number) => value.toLocaleString("fr-FR")}
-                      />
+                    />
                     </Line>
                   </LineChart>
                 </ResponsiveContainer>
@@ -3594,7 +3635,7 @@ export default function AnalyseCA() {
                         fontWeight={600}
                         fill={COLORS[0]}
                         formatter={(value: number) => value.toLocaleString("fr-FR")}
-                      />
+                    />
                     </Line>
                     <Line
                       type="monotone"
@@ -3611,7 +3652,7 @@ export default function AnalyseCA() {
                         fontWeight={600}
                         fill={COLORS[1]}
                         formatter={(value: number) => value.toLocaleString("fr-FR")}
-                      />
+                    />
                     </Line>
                   </LineChart>
                 </ResponsiveContainer>
