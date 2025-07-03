@@ -753,8 +753,8 @@ export default function AnalyseCA() {
   const donneesEvolutionCA = Array.from(new Set(donneesFiltrees.map((donnee) => donnee.date)))
     .map((date) => {
       const donneesJour = donneesFiltrees.filter((d) => d.date === date)
-      const caJour = donneesJour.reduce((acc, curr) => acc + curr.ca, 
-0)
+      const caJour = donneesJour.reduce((acc, curr) => acc + curr.ca,
+        0)
       const caHTJour = donneesJour.reduce((acc, curr) => acc + curr.caHT, 0)
       const caHTSansLivraisonJour = donneesJour.reduce((acc, curr) => acc + curr.caHTSansLivraison, 0)
       const caLivraisonJour = donneesJour.reduce((acc, curr) => acc + curr.caLivraison, 0)
@@ -1211,7 +1211,7 @@ export default function AnalyseCA() {
                           fontWeight={600}
                           fill={COLORS[0]}
                           formatter={(value: number) => value.toLocaleString("fr-FR")}
-                      />
+                        />
                       </Line>
                       <Line
                         type="monotone"
@@ -1228,7 +1228,7 @@ export default function AnalyseCA() {
                           fontWeight={600}
                           fill={COLORS[1]}
                           formatter={(value: number) => value.toLocaleString("fr-FR")}
-                      />
+                        />
                       </Line>
                     </LineChart>
                   </ResponsiveContainer>
@@ -1237,57 +1237,57 @@ export default function AnalyseCA() {
             </Card>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Card>
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <CardTitle>Évolution du CA HT ITEK avec frais de livraisons</CardTitle>
-                    <CardDescription>Comparaison 2024/2025</CardDescription>
+              <Card>
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <CardTitle>Évolution du CA HT ITEK avec frais de livraisons</CardTitle>
+                      <CardDescription>Comparaison 2024/2025</CardDescription>
+                    </div>
+                    <ExportButton />
                   </div>
-                  <ExportButton />
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="h-[350px]">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <LineChart
-                      data={[
-                        { date: "Jan", "2024": 28500, "2025": 32300 },
-                        { date: "Fév", "2024": 30200, "2025": 34800 },
-                        { date: "Mar", "2024": 32900, "2025": 37400 },
-                        { date: "Avr", "2024": 34200, "2025": 39900 },
-                        { date: "Mai", "2024": 36800, "2025": 42300 },
-                        { date: "Juin", "2024": 39100, "2025": 44700 },
-                        { date: "Juil", "2024": 41500, "2025": 47200 },
-                        { date: "Août", "2024": 40800, "2025": 46500 },
-                        { date: "Sept", "2024": 42300, "2025": 48800 },
-                        { date: "Oct", "2024": 44700, "2025": 51200 },
-                        { date: "Nov", "2024": 47200, "2025": 54500 },
-                        { date: "Déc", "2024": 49800, "2025": 57900 },
-                      ]}
-                      margin={{
-                        top: 5,
-                        right: 10,
-                        left: 10,
-                        bottom: 5,
-                      }}
-                    >
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="date" />
-                      <YAxis />
-                      <Tooltip
-                        formatter={(value) =>
-                          new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }).format(value as number)
-                        }
-                      />
-                      <Legend />
-                      <Line
-                        type="monotone"
-                        dataKey="2024"
-                        name="CA ITEK 2024"
-                        stroke={COLORS[0]}
-                        activeDot={{ r: 8 }}
-                        strokeWidth={2}
+                </CardHeader>
+                <CardContent>
+                  <div className="h-[350px]">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <LineChart
+                        data={[
+                          { date: "Jan", "2024": 28500, "2025": 32300 },
+                          { date: "Fév", "2024": 30200, "2025": 34800 },
+                          { date: "Mar", "2024": 32900, "2025": 37400 },
+                          { date: "Avr", "2024": 34200, "2025": 39900 },
+                          { date: "Mai", "2024": 36800, "2025": 42300 },
+                          { date: "Juin", "2024": 39100, "2025": 44700 },
+                          { date: "Juil", "2024": 41500, "2025": 47200 },
+                          { date: "Août", "2024": 40800, "2025": 46500 },
+                          { date: "Sept", "2024": 42300, "2025": 48800 },
+                          { date: "Oct", "2024": 44700, "2025": 51200 },
+                          { date: "Nov", "2024": 47200, "2025": 54500 },
+                          { date: "Déc", "2024": 49800, "2025": 57900 },
+                        ]}
+                        margin={{
+                          top: 5,
+                          right: 10,
+                          left: 10,
+                          bottom: 5,
+                        }}
+                      >
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="date" />
+                        <YAxis />
+                        <Tooltip
+                          formatter={(value) =>
+                            new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }).format(value as number)
+                          }
+                        />
+                        <Legend />
+                        <Line
+                          type="monotone"
+                          dataKey="2024"
+                          name="CA ITEK 2024"
+                          stroke={COLORS[0]}
+                          activeDot={{ r: 8 }}
+                          strokeWidth={2}
                         >
                           <LabelList
                             dataKey="2024"
@@ -1296,15 +1296,15 @@ export default function AnalyseCA() {
                             fontWeight={600}
                             fill={COLORS[0]}
                             formatter={(value: number) => value.toLocaleString("fr-FR")}
-                      />
+                          />
                         </Line>
-                      <Line
-                        type="monotone"
-                        dataKey="2025"
-                        name="CA ITEK 2025"
-                        stroke={COLORS[1]}
-                        activeDot={{ r: 8 }}
-                        strokeWidth={2}
+                        <Line
+                          type="monotone"
+                          dataKey="2025"
+                          name="CA ITEK 2025"
+                          stroke={COLORS[1]}
+                          activeDot={{ r: 8 }}
+                          strokeWidth={2}
                         >
                           <LabelList
                             dataKey="2025"
@@ -1313,64 +1313,64 @@ export default function AnalyseCA() {
                             fontWeight={600}
                             fill={COLORS[1]}
                             formatter={(value: number) => value.toLocaleString("fr-FR")}
-                      />
+                          />
                         </Line>
-                    </LineChart>
-                  </ResponsiveContainer>
-                </div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <CardTitle>Évolution du CA HT Autres avec frais de livraisons</CardTitle>
-                    <CardDescription>Comparaison 2024/2025</CardDescription>
+                      </LineChart>
+                    </ResponsiveContainer>
                   </div>
-                  <ExportButton />
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="h-[350px]">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <LineChart
-                      data={[
-                        { date: "Jan", "2024": 14000, "2025": 16000 },
-                        { date: "Fév", "2024": 15000, "2025": 17000 },
-                        { date: "Mar", "2024": 16000, "2025": 18000 },
-                        { date: "Avr", "2024": 17000, "2025": 19000 },
-                        { date: "Mai", "2024": 18000, "2025": 20000 },
-                        { date: "Juin", "2024": 19000, "2025": 21000 },
-                        { date: "Juil", "2024": 20000, "2025": 22000 },
-                        { date: "Août", "2024": 19000, "2025": 21000 },
-                        { date: "Sept", "2024": 20000, "2025": 22000 },
-                        { date: "Oct", "2024": 21000, "2025": 23000 },
-                        { date: "Nov", "2024": 22000, "2025": 24000 },
-                        { date: "Déc", "2024": 23000, "2025": 25000 },
-                      ]}
-                      margin={{
-                        top: 5,
-                        right: 10,
-                        left: 10,
-                        bottom: 5,
-                      }}
-                    >
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="date" />
-                      <YAxis />
-                      <Tooltip
-                        formatter={(value) =>
-                          new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }).format(value as number)
-                        }
-                      />
-                      <Legend />
-                      <Line
-                        type="monotone"
-                        dataKey="2024"
-                        name="CA Autres 2024"
-                        stroke={COLORS[0]}
-                        activeDot={{ r: 8 }}
-                        strokeWidth={2}
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <CardTitle>Évolution du CA HT Autres avec frais de livraisons</CardTitle>
+                      <CardDescription>Comparaison 2024/2025</CardDescription>
+                    </div>
+                    <ExportButton />
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="h-[350px]">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <LineChart
+                        data={[
+                          { date: "Jan", "2024": 14000, "2025": 16000 },
+                          { date: "Fév", "2024": 15000, "2025": 17000 },
+                          { date: "Mar", "2024": 16000, "2025": 18000 },
+                          { date: "Avr", "2024": 17000, "2025": 19000 },
+                          { date: "Mai", "2024": 18000, "2025": 20000 },
+                          { date: "Juin", "2024": 19000, "2025": 21000 },
+                          { date: "Juil", "2024": 20000, "2025": 22000 },
+                          { date: "Août", "2024": 19000, "2025": 21000 },
+                          { date: "Sept", "2024": 20000, "2025": 22000 },
+                          { date: "Oct", "2024": 21000, "2025": 23000 },
+                          { date: "Nov", "2024": 22000, "2025": 24000 },
+                          { date: "Déc", "2024": 23000, "2025": 25000 },
+                        ]}
+                        margin={{
+                          top: 5,
+                          right: 10,
+                          left: 10,
+                          bottom: 5,
+                        }}
+                      >
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="date" />
+                        <YAxis />
+                        <Tooltip
+                          formatter={(value) =>
+                            new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }).format(value as number)
+                          }
+                        />
+                        <Legend />
+                        <Line
+                          type="monotone"
+                          dataKey="2024"
+                          name="CA Autres 2024"
+                          stroke={COLORS[0]}
+                          activeDot={{ r: 8 }}
+                          strokeWidth={2}
                         >
                           <LabelList
                             dataKey="2024"
@@ -1379,15 +1379,15 @@ export default function AnalyseCA() {
                             fontWeight={600}
                             fill={COLORS[0]}
                             formatter={(value: number) => value.toLocaleString("fr-FR")}
-                      />
+                          />
                         </Line>
-                      <Line
-                        type="monotone"
-                        dataKey="2025"
-                        name="CA Autres 2025"
-                        stroke={COLORS[1]}
-                        activeDot={{ r: 8 }}
-                        strokeWidth={2}
+                        <Line
+                          type="monotone"
+                          dataKey="2025"
+                          name="CA Autres 2025"
+                          stroke={COLORS[1]}
+                          activeDot={{ r: 8 }}
+                          strokeWidth={2}
                         >
                           <LabelList
                             dataKey="2025"
@@ -1396,127 +1396,220 @@ export default function AnalyseCA() {
                             fontWeight={600}
                             fill={COLORS[1]}
                             formatter={(value: number) => value.toLocaleString("fr-FR")}
-                      />
+                          />
                         </Line>
-                    </LineChart>
-                  </ResponsiveContainer>
-                </div>
-              </CardContent>
-            </Card>
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </div>
+                </CardContent>
+              </Card>
             </div>
 
-            <Card>
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <CardTitle>Évolution des commandes</CardTitle>
-                    <CardDescription>Commandes CA / ITEK</CardDescription>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <Card>
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <CardTitle>Évolution des commandes</CardTitle>
+                      <CardDescription>Commandes CA / ITEK</CardDescription>
+                    </div>
+                    <ExportButton />
                   </div>
-                  <ExportButton />
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="h-[350px]">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart
-                      data={donneesEvolutionCA.map(jour => ({
-                        ...jour,
-                        ventesItek: donneesCA
-                          .filter(d => format(new Date(d.date), "dd/MM", { locale: fr }) === jour.date)
-                          .reduce((acc, curr) => acc + curr.ventesItek, 0),
-                      }))}
-                      margin={{
-                        top: 5,
-                        right: 10,
-                        left: 10,
-                        bottom: 5,
-                      }}
-                    >
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="date" />
-                      <YAxis yAxisId="left" orientation="left" />
-                      <YAxis yAxisId="right" orientation="right" />
-                      <Tooltip
-                        formatter={(value, name) => {
-                          if (name === "panierMoyenHT") {
-                            return [
-                              new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }).format(
-                                value as number,
-                              ),
-                              "Panier moyen HT",
-                            ]
-                          }
-                          return [value, name === "nbCommandes" ? "Nombre de commandes" : name]
+                </CardHeader>
+                <CardContent>
+                  <div className="h-[350px]">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart
+                        data={donneesEvolutionCA.map(jour => ({
+                          ...jour,
+                          ventesItek: donneesCA
+                            .filter(d => format(new Date(d.date), "dd/MM", { locale: fr }) === jour.date)
+                            .reduce((acc, curr) => acc + curr.ventesItek, 0),
+                        }))}
+                        margin={{
+                          top: 5,
+                          right: 10,
+                          left: 10,
+                          bottom: 5,
                         }}
-                      />
-                      <Legend />
-                      <Bar
-                        yAxisId="left"
-                        dataKey="nbCommandes"
-                        name="Nombre de commandes"
-                        fill={COLORS[3]}
-                        barSize={20}
                       >
-                        <LabelList
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="date" />
+                        <YAxis yAxisId="left" orientation="left" />
+                        <YAxis yAxisId="right" orientation="right" />
+                        <Tooltip
+                          formatter={(value, name) => {
+                            if (name === "panierMoyenHT") {
+                              return [
+                                new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }).format(
+                                  value as number,
+                                ),
+                                "Panier moyen HT",
+                              ]
+                            }
+                            return [value, name === "nbCommandes" ? "Nombre de commandes" : name]
+                          }}
+                        />
+                        <Legend />
+                        <Bar
+                          yAxisId="left"
                           dataKey="nbCommandes"
-                          position="top"
-                          content={({ x, y, width, value }) => {
-                            if (typeof x !== "number" || typeof y !== "number" || typeof width !== "number") return null;
-                            return (
-                              <text
-                                x={x + width / 2}
-                                y={y - 8}
-                                textAnchor="middle"
-                                fontSize={12}
-                                fontWeight={600}
-                                fill={COLORS[3]}
-                              >
-                                {value}
-                              </text>
-                            );
-                          }}
-                        />
-                      </Bar>
-                      <Bar
-                        yAxisId="left"
-                        dataKey="ventesItek"
-                        name="Nombre de commandes ITEK"
-                        fill={COLORS[0]}
-                        barSize={20}
-                      >
-                        <LabelList
+                          name="Nombre de commandes"
+                          fill={COLORS[3]}
+                          barSize={20}
+                        >
+                          <LabelList
+                            dataKey="nbCommandes"
+                            position="top"
+                            content={({ x, y, width, value }) => {
+                              if (typeof x !== "number" || typeof y !== "number" || typeof width !== "number") return null;
+                              return (
+                                <text
+                                  x={x + width / 2}
+                                  y={y - 8}
+                                  textAnchor="middle"
+                                  fontSize={12}
+                                  fontWeight={600}
+                                  fill={COLORS[3]}
+                                >
+                                  {value}
+                                </text>
+                              );
+                            }}
+                          />
+                        </Bar>
+                        <Bar
+                          yAxisId="left"
                           dataKey="ventesItek"
-                          position="top"
-                          content={({ x, y, width, value }) => {
-                            if (typeof x !== "number" || typeof y !== "number" || typeof width !== "number") return null;
-                            return (
-                              <text
-                                x={x + width / 2}
-                                y={y - 8}
-                                textAnchor="middle"
-                                fontSize={12}
-                                fontWeight={600}
-                                fill={COLORS[0]}
-                              >
-                                {value}
-                              </text>
-                            );
-                          }}
+                          name="Nombre de commandes ITEK"
+                          fill={COLORS[0]}
+                          barSize={20}
+                        >
+                          <LabelList
+                            dataKey="ventesItek"
+                            position="top"
+                            content={({ x, y, width, value }) => {
+                              if (typeof x !== "number" || typeof y !== "number" || typeof width !== "number") return null;
+                              return (
+                                <text
+                                  x={x + width / 2}
+                                  y={y - 8}
+                                  textAnchor="middle"
+                                  fontSize={12}
+                                  fontWeight={600}
+                                  fill={COLORS[0]}
+                                >
+                                  {value}
+                                </text>
+                              );
+                            }}
+                          />
+                        </Bar>
+                        <Line
+                          yAxisId="right"
+                          type="monotone"
+                          dataKey="panierMoyenHT"
+                          name="Panier moyen HT"
+                          stroke={COLORS[4]}
+                          strokeWidth={2}
                         />
-                      </Bar>
-                      <Line
-                        yAxisId="right"
-                        type="monotone"
-                        dataKey="panierMoyenHT"
-                        name="Panier moyen HT"
-                        stroke={COLORS[4]}
-                        strokeWidth={2}
-                      />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
-              </CardContent>
-            </Card>
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <CardTitle>Évolution du CA HT global / ITEK</CardTitle>
+                      <CardDescription>Comparaison CA global et CA ITEK</CardDescription>
+                    </div>
+                    <ExportButton />
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="h-[350px]">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart
+                        data={donneesEvolutionCA}
+                        margin={{
+                          top: 5,
+                          right: 10,
+                          left: 10,
+                          bottom: 5,
+                        }}
+                      >
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="date" />
+                        <YAxis yAxisId="left" orientation="left" />
+                        <Tooltip
+                          formatter={(value) =>
+                            new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }).format(value as number)
+                          }
+                        />
+                        <Legend />
+                        <Bar
+                          yAxisId="left"
+                          dataKey="caHT"
+                          name="CA global"
+                          fill={COLORS[3]}
+                          barSize={20}
+                        >
+                          <LabelList
+                            dataKey="caHT"
+                            position="top"
+                            content={({ x, y, width, value }) => {
+                              if (typeof x !== "number" || typeof y !== "number" || typeof width !== "number") return null;
+                              return (
+                                <text
+                                  x={x + width / 2}
+                                  y={y - 8}
+                                  textAnchor="middle"
+                                  fontSize={10}
+                                  fontWeight={600}
+                                  fill={COLORS[3]}
+                                >
+                                  {value?.toLocaleString("fr-FR", { style: "currency", currency: "EUR", maximumFractionDigits: 0 })}
+                                </text>
+                              );
+                            }}
+                          />
+                        </Bar>
+                        <Bar
+                          yAxisId="left"
+                          dataKey="caItek"
+                          name="CA ITEK"
+                          fill={COLORS[0]}
+                          barSize={20}
+                        >
+                          <LabelList
+                            dataKey="caItek"
+                            position="top"
+                            content={({ x, y, width, value }) => {
+                              if (typeof x !== "number" || typeof y !== "number" || typeof width !== "number") return null;
+                              return (
+                                <text
+                                  x={x + width / 2}
+                                  y={y - 8}
+                                  textAnchor="middle"
+                                  fontSize={10}
+                                  fontWeight={600}
+                                  fill={COLORS[0]}
+                                >
+                                  {value?.toLocaleString("fr-FR", { style: "currency", currency: "EUR", maximumFractionDigits: 0 })}
+                                </text>
+                              );
+                            }}
+                          />
+                        </Bar>
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
           </div>
 
           <Card>
@@ -2336,7 +2429,7 @@ export default function AnalyseCA() {
                           fontWeight={600}
                           fill={COLORS[0]}
                           formatter={(value: number) => value.toLocaleString("fr-FR")}
-                      />
+                        />
                       </Line>
                       <Line
                         type="monotone"
@@ -2353,7 +2446,7 @@ export default function AnalyseCA() {
                           fontWeight={600}
                           fill={COLORS[1]}
                           formatter={(value: number) => value.toLocaleString("fr-FR")}
-                      />
+                        />
                       </Line>
                     </LineChart>
                   </ResponsiveContainer>
@@ -3087,7 +3180,7 @@ export default function AnalyseCA() {
                         fontWeight={600}
                         fill="#8884d8"
                         formatter={(value: number) => value.toLocaleString("fr-FR")}
-                    />
+                      />
                     </Line>
                     <Line
                       type="monotone"
@@ -3104,7 +3197,7 @@ export default function AnalyseCA() {
                         fontWeight={600}
                         fill="#82ca9d"
                         formatter={(value: number) => value.toLocaleString("fr-FR")}
-                    />
+                      />
                     </Line>
                   </LineChart>
                 </ResponsiveContainer>
@@ -3635,7 +3728,7 @@ export default function AnalyseCA() {
                         fontWeight={600}
                         fill={COLORS[0]}
                         formatter={(value: number) => value.toLocaleString("fr-FR")}
-                    />
+                      />
                     </Line>
                     <Line
                       type="monotone"
@@ -3652,7 +3745,7 @@ export default function AnalyseCA() {
                         fontWeight={600}
                         fill={COLORS[1]}
                         formatter={(value: number) => value.toLocaleString("fr-FR")}
-                    />
+                      />
                     </Line>
                   </LineChart>
                 </ResponsiveContainer>
