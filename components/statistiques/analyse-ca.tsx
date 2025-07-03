@@ -2486,7 +2486,27 @@ export default function AnalyseCA() {
                       <YAxis />
                       <Tooltip />
                       <Legend />
-                      <Bar dataKey="ventesItek" name="Ventes ITEK" fill={COLORS[3]} barSize={30} />
+                      <Bar dataKey="ventesItek" name="Ventes ITEK" fill={COLORS[3]} barSize={30}>
+                        <LabelList
+                          dataKey="ventesItek"
+                          position="top"
+                          content={({ x, y, width, value }) => {
+                            if (typeof x !== "number" || typeof y !== "number" || typeof width !== "number") return null;
+                            return (
+                              <text
+                                x={x + width / 2}
+                                y={y - 2}
+                                textAnchor="middle"
+                                fontSize={10}
+                                fontWeight={600}
+                                fill={COLORS[3]}
+                              >
+                                {value}
+                              </text>
+                            );
+                          }}
+                        />
+                      </Bar>
                     </BarChart>
                   </ResponsiveContainer>
                 </div>
