@@ -7,10 +7,26 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { DataTable } from "@/components/data-table"
 import NewsletterForm from "./newsletter-form"
-import NewsletterStats from "./newsletter-stats"
+
 import { FilterBar } from "@/components/filter-bar"
 import type { DateRange } from "react-day-picker"
 import { MailPreview } from "@/components/automation/mail-preview"
+import {
+  ResponsiveContainer,
+  BarChart,
+  CartesianGrid,
+  XAxis,
+  YAxis,
+  Tooltip,
+  Legend,
+  Bar,
+  PieChart,
+  Pie,
+  Cell,
+  LineChart,
+  Line
+} from "recharts"
+import { Table, TableHeader, TableBody, TableCell, TableHead, TableRow } from "@/components/ui/table"
 
 // Types
 export type NewsletterTemplate = "simple" | "promotionnel" | "informatif"
@@ -234,7 +250,7 @@ export default function NewsletterComponent() {
   const [selectedSite, setSelectedSite] = useState<string>("")
   const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined)
   const [editingNewsletter, setEditingNewsletter] = useState<Newsletter | null>(null)
-  const [selectedNewsletterForDetail, setSelectedNewsletterForDetail] = useState<Newsletter | null>(null)
+
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [newsletterToDelete, setNewsletterToDelete] = useState<Newsletter | null>(null)
   const [mailPreviewOpen, setMailPreviewOpen] = useState(false)
@@ -286,11 +302,6 @@ export default function NewsletterComponent() {
     }
     setDeleteDialogOpen(false)
     setNewsletterToDelete(null)
-  }
-
-  const handleViewNewsletterDetail = (newsletter: Newsletter) => {
-    setSelectedNewsletterForDetail(newsletter)
-    setActiveTab("detail")
   }
 
   const handleSubmitNewsletter = (newsletter: Newsletter) => {
@@ -367,9 +378,7 @@ export default function NewsletterComponent() {
           >
             <Eye className="h-5 w-5" />
           </Button>
-          <Button variant="ghost" size="icon" title="Détail" onClick={() => handleViewNewsletterDetail(row.original)}>
-            <Info className="h-4 w-4" />
-          </Button>
+
           <Button variant="ghost" size="icon" title="Statistiques" onClick={() => setActiveTab("statistiques")}>
             <BarChart4 className="h-4 w-4" />
           </Button>
@@ -390,7 +399,6 @@ export default function NewsletterComponent() {
         <TabsList>
           <TabsTrigger value="liste">Liste des newsletters</TabsTrigger>
           <TabsTrigger value="statistiques">Statistiques</TabsTrigger>
-          <TabsTrigger value="detail">Détail</TabsTrigger>
         </TabsList>
         {activeTab === "liste" && (
           <Button onClick={handleCreateNewsletter}>
@@ -414,9 +422,6 @@ export default function NewsletterComponent() {
               <CardTitle>Newsletters</CardTitle>
               <CardDescription>Gérez vos campagnes de newsletters</CardDescription>
             </div>
-            <Button variant="outline" size="sm" onClick={() => setActiveTab("detail")}>
-              <Info className="mr-2 h-4 w-4" /> Détail
-            </Button>
           </CardHeader>
           <CardContent>
             {filteredNewsletters.length === 0 ? (
@@ -452,198 +457,364 @@ export default function NewsletterComponent() {
       </TabsContent>
 
       <TabsContent value="statistiques">
-        <NewsletterStats newsletters={newsletters} />
-      </TabsContent>
+        <FilterBar
+          onDateChange={handleDateChange}
+          onSiteChange={handleSiteChange}
+          onReset={handleResetFilters}
+          dateValue={dateRange}
+          siteValue={selectedSite}
+        />
 
-      <TabsContent value="detail" className="space-y-4">
-        <div className="mb-4">
-          <Button variant="outline" onClick={() => {
-            setActiveTab("liste")
-            setSelectedNewsletterForDetail(null)
-          }}>
-            <ArrowLeft className="mr-2 h-4 w-4" /> Retour à la liste
-          </Button>
+        {/* Cards d'indicateurs clés */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base">Emails envoyés</CardTitle>
+              <CardDescription className="text-xs">Total sur toutes les newsletters</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold">
+                {newsletters.reduce((acc, nl) => acc + nl.stats.sent, 0)}
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base">Emails ouverts</CardTitle>
+              <CardDescription className="text-xs">Total sur toutes les newsletters</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold">
+                {newsletters.reduce((acc, nl) => acc + nl.stats.opened, 0)}
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base">Clics</CardTitle>
+              <CardDescription className="text-xs">Total sur toutes les newsletters</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold">
+                {newsletters.reduce((acc, nl) => acc + nl.stats.clicked, 0)}
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base">Taux d'ouverture</CardTitle>
+              <CardDescription className="text-xs">Moyenne globale</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold">
+                {(() => {
+                  const totalSent = newsletters.reduce((acc, nl) => acc + nl.stats.sent, 0)
+                  const totalOpened = newsletters.reduce((acc, nl) => acc + nl.stats.opened, 0)
+                  return totalSent > 0 ? ((totalOpened / totalSent) * 100).toFixed(1) : "0"
+                })()}%
+              </div>
+            </CardContent>
+          </Card>
         </div>
+
+        {/* Graphiques principaux */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-8">
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle>Performance par newsletter</CardTitle>
+                  <CardDescription>Emails envoyés vs ouverts vs clics</CardDescription>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="h-[350px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart
+                    data={newsletters}
+                    margin={{
+                      top: 5,
+                      right: 30,
+                      left: 20,
+                      bottom: 5,
+                    }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="name" />
+                    <YAxis />
+                    <Tooltip />
+                    <Legend />
+                    <Bar dataKey="stats.sent" name="Envoyés" fill="#3b82f6" />
+                    <Bar dataKey="stats.opened" name="Ouverts" fill="#10b981" />
+                    <Bar dataKey="stats.clicked" name="Clics" fill="#f59e0b" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle>Taux d'engagement par newsletter</CardTitle>
+                  <CardDescription>Performance des newsletters</CardDescription>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="h-[350px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart
+                    data={newsletters.map(nl => ({
+                      ...nl,
+                      openRate: nl.stats.sent > 0 ? (nl.stats.opened / nl.stats.sent) * 100 : 0,
+                      clickRate: nl.stats.opened > 0 ? (nl.stats.clicked / nl.stats.opened) * 100 : 0
+                    }))}
+                    margin={{
+                      top: 5,
+                      right: 30,
+                      left: 20,
+                      bottom: 5,
+                    }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="name" />
+                    <YAxis />
+                    <Tooltip formatter={(value) => [`${value}%`, "Taux"]} />
+                    <Legend />
+                    <Bar dataKey="openRate" name="Taux d'ouverture" fill="#10b981" />
+                    <Bar dataKey="clickRate" name="Taux de clic" fill="#f59e0b" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Graphiques de taux */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-8">
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle>Évolution des performances</CardTitle>
+                  <CardDescription>Tendances sur 6 mois</CardDescription>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="h-[350px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart
+                    data={[
+                      { mois: "Jan", envoyes: 1250, ouverts: 680, clics: 320, tauxOuverture: 54.4 },
+                      { mois: "Fév", envoyes: 1350, ouverts: 720, clics: 350, tauxOuverture: 53.3 },
+                      { mois: "Mar", envoyes: 1450, ouverts: 780, clics: 380, tauxOuverture: 53.8 },
+                      { mois: "Avr", envoyes: 1550, ouverts: 850, clics: 420, tauxOuverture: 54.8 },
+                      { mois: "Mai", envoyes: 1650, ouverts: 920, clics: 460, tauxOuverture: 55.8 },
+                      { mois: "Jun", envoyes: 1750, ouverts: 980, clics: 500, tauxOuverture: 56.0 },
+                    ]}
+                    margin={{
+                      top: 5,
+                      right: 30,
+                      left: 20,
+                      bottom: 5,
+                    }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="mois" />
+                    <YAxis yAxisId="left" />
+                    <YAxis yAxisId="right" orientation="right" />
+                    <Tooltip />
+                    <Legend />
+                    <Line yAxisId="left" type="monotone" dataKey="envoyes" name="Envoyés" stroke="#3b82f6" strokeWidth={2} />
+                    <Line yAxisId="left" type="monotone" dataKey="ouverts" name="Ouverts" stroke="#10b981" strokeWidth={2} />
+                    <Line yAxisId="left" type="monotone" dataKey="clics" name="Clics" stroke="#f59e0b" strokeWidth={2} />
+                    <Line yAxisId="right" type="monotone" dataKey="tauxOuverture" name="Taux d'ouverture (%)" stroke="#8b5cf6" strokeWidth={2} />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle>Répartition des ouvertures</CardTitle>
+                  <CardDescription>Part de chaque newsletter</CardDescription>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="h-[350px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={newsletters.map(nl => ({
+                        name: nl.name,
+                        value: nl.stats.opened
+                      }))}
+                      cx="50%"
+                      cy="50%"
+                      labelLine={true}
+                      label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                      outerRadius={120}
+                      fill="#8884d8"
+                      dataKey="value"
+                    >
+                      {newsletters.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={["#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6"][index % 5]} />
+                      ))}
+                    </Pie>
+                    <Tooltip formatter={(value) => [value, "Emails ouverts"]} />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Tableaux thématiques */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-8">
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle>Performance des newsletters</CardTitle>
+                  <CardDescription>Emails envoyés, ouverts et clics</CardDescription>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="bg-gray-100 font-medium">Newsletter</TableHead>
+                      <TableHead className="text-right bg-blue-50">Site</TableHead>
+                      <TableHead className="text-right bg-blue-50">Envoyés</TableHead>
+                      <TableHead className="text-right bg-blue-50">Ouverts</TableHead>
+                      <TableHead className="text-right bg-blue-50">Clics</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {newsletters.map((nl) => (
+                      <TableRow key={nl.name}>
+                        <TableCell className="font-medium sticky left-0 bg-white z-10">{nl.name}</TableCell>
+                        <TableCell className="text-right bg-blue-50">{nl.siteId}</TableCell>
+                        <TableCell className="text-right bg-blue-50">{nl.stats.sent}</TableCell>
+                        <TableCell className="text-right bg-blue-50">{nl.stats.opened}</TableCell>
+                        <TableCell className="text-right bg-blue-50">{nl.stats.clicked}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle>Taux d'engagement</CardTitle>
+                  <CardDescription>Performance des newsletters</CardDescription>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="bg-gray-100 font-medium">Newsletter</TableHead>
+                      <TableHead className="text-right bg-blue-50">Site</TableHead>
+                      <TableHead className="text-right bg-blue-50">Taux d'ouverture</TableHead>
+                      <TableHead className="text-right bg-green-50">Taux de clic</TableHead>
+                      <TableHead className="text-right bg-green-50">Désabonnements</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {newsletters.map((nl) => (
+                      <TableRow key={nl.name}>
+                        <TableCell className="font-medium">{nl.name}</TableCell>
+                        <TableCell className="text-right bg-blue-50">{nl.siteId}</TableCell>
+                        <TableCell className="text-right bg-blue-50">
+                          {nl.stats.sent > 0 ? ((nl.stats.opened / nl.stats.sent) * 100).toFixed(1) : "0"}%
+                        </TableCell>
+                        <TableCell className="text-right bg-green-50">
+                          {nl.stats.opened > 0 ? ((nl.stats.clicked / nl.stats.opened) * 100).toFixed(1) : "0"}%
+                        </TableCell>
+                        <TableCell className="text-right bg-green-50">{nl.stats.unsubscribed}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Tableau synthèse */}
         <Card>
           <CardHeader>
-            <CardTitle>
-              {selectedNewsletterForDetail
-                ? `Détails de la newsletter : ${selectedNewsletterForDetail.name}`
-                : "Comprendre les newsletters"}
-            </CardTitle>
-            <CardDescription>
-              {selectedNewsletterForDetail
-                ? `Informations détaillées sur la newsletter pour le site ${selectedNewsletterForDetail.siteId}`
-                : "Explication détaillée du fonctionnement des newsletters"}
-            </CardDescription>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle>Synthèse complète</CardTitle>
+                <CardDescription>Vue d'ensemble de toutes les newsletters</CardDescription>
+              </div>
+            </div>
           </CardHeader>
-          <CardContent className="space-y-4">
-            {selectedNewsletterForDetail ? (
-              <div className="space-y-6">
-                <Card className="border shadow-sm">
-                  <CardHeader className="bg-muted/50 pb-3">
-                    <CardTitle className="text-base font-medium">Informations de base</CardTitle>
-                  </CardHeader>
-                  <CardContent className="pt-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <p className="text-sm text-muted-foreground">Nom</p>
-                        <p className="font-medium">{selectedNewsletterForDetail.name}</p>
-                      </div>
-                      <div>
-                        <p className="text-sm text-muted-foreground">Site</p>
-                        <p className="font-medium">{selectedNewsletterForDetail.siteId}</p>
-                      </div>
-                      <div>
-                        <p className="text-sm text-muted-foreground">Date de création</p>
-                        <p className="font-medium">{new Date(selectedNewsletterForDetail.createdAt).toLocaleDateString("fr-FR")}</p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card className="border shadow-sm">
-                  <CardHeader className="bg-muted/50 pb-3">
-                    <CardTitle className="text-base font-medium">Contenu de la newsletter</CardTitle>
-                  </CardHeader>
-                  <CardContent className="pt-4 space-y-4">
-                    <div className="mb-2">
-                      <p className="text-sm text-muted-foreground">Objet</p>
-                      <p className="font-medium">{selectedNewsletterForDetail.subject}</p>
-                    </div>
-                    <div className="mb-2">
-                      <p className="text-sm text-muted-foreground">Pré-en-tête</p>
-                      <p className="font-medium">{selectedNewsletterForDetail.preheader}</p>
-                    </div>
-                    <div className="mb-2">
-                      <p className="text-sm text-muted-foreground">Titre du mail</p>
-                      <p className="font-medium">{selectedNewsletterForDetail.titreMail}</p>
-                    </div>
-                    <div className="mb-2">
-                      <p className="text-sm text-muted-foreground">Texte d'aperçu</p>
-                      <p className="font-medium">{selectedNewsletterForDetail.texteApercu}</p>
-                    </div>
-                    <div className="mb-2">
-                      <p className="text-sm text-muted-foreground">Image</p>
-                      <div className="mt-1 border rounded-md p-2 max-w-xs">
-                        <img src={selectedNewsletterForDetail.imageUrl} alt="Aperçu" className="max-w-full h-auto" />
-                      </div>
-                    </div>
-                    <div className="mb-2">
-                      <p className="text-sm text-muted-foreground">Lien de la bannière</p>
-                      <p className="font-medium break-all">{selectedNewsletterForDetail.bannerLink}</p>
-                    </div>
-                    <div className="mb-2">
-                      <p className="text-sm text-muted-foreground">Paramètres UTM</p>
-                      <ul className="text-xs text-muted-foreground pl-4 list-disc">
-                        <li>Source : {selectedNewsletterForDetail.utmSource}</li>
-                        <li>Medium : {selectedNewsletterForDetail.utmMedium}</li>
-                        <li>Campaign : {selectedNewsletterForDetail.utmCampaign}</li>
-                        <li>Term : {selectedNewsletterForDetail.utmTerm}</li>
-                        <li>Content : {selectedNewsletterForDetail.utmContent}</li>
-                      </ul>
-                    </div>
-                    <div className="mb-2">
-                      <p className="text-sm text-muted-foreground">Contenu du mail (partie haute)</p>
-                      <div className="prose prose-sm max-w-none border rounded p-3 bg-white" dangerouslySetInnerHTML={{ __html: selectedNewsletterForDetail.contenuMailHaut }} />
-                    </div>
-                    <div className="mb-2">
-                      <p className="text-sm text-muted-foreground">Contenu du mail (partie basse)</p>
-                      <div className="prose prose-sm max-w-none border rounded p-3 bg-white" dangerouslySetInnerHTML={{ __html: selectedNewsletterForDetail.contenuMailBas }} />
-                    </div>
-                    <div className="mb-2">
-                      <p className="text-sm text-muted-foreground">Texte du bouton</p>
-                      <p className="font-medium">{selectedNewsletterForDetail.texteButton}</p>
-                    </div>
-                    <div className="mb-2">
-                      <p className="text-sm text-muted-foreground">Lien du bouton</p>
-                      <p className="font-medium break-all">{selectedNewsletterForDetail.buttonLink}</p>
-                    </div>
-                    <div className="mb-2">
-                      <p className="text-sm text-muted-foreground">Paramètres UTM du bouton</p>
-                      <ul className="text-xs text-muted-foreground pl-4 list-disc">
-                        <li>Source : {selectedNewsletterForDetail.buttonUtmSource}</li>
-                        <li>Medium : {selectedNewsletterForDetail.buttonUtmMedium}</li>
-                        <li>Campaign : {selectedNewsletterForDetail.buttonUtmCampaign}</li>
-                        <li>Term : {selectedNewsletterForDetail.buttonUtmTerm}</li>
-                        <li>Content : {selectedNewsletterForDetail.buttonUtmContent}</li>
-                      </ul>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card className="border shadow-sm">
-                  <CardHeader className="bg-muted/50 pb-3">
-                    <CardTitle className="text-base font-medium">Audience</CardTitle>
-                  </CardHeader>
-                  <CardContent className="pt-4">
-                    <div className="p-4 bg-muted/20 rounded-md">
-                      <p>
-                        <span className="font-medium">Tous les inscrits à la newsletter</span>
-                      </p>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    setMailPreviewData({
-                      titreMail: selectedNewsletterForDetail.titreMail,
-                      sujet: selectedNewsletterForDetail.subject,
-                      texteApercu: selectedNewsletterForDetail.texteApercu,
-                      imageUrl: selectedNewsletterForDetail.imageUrl,
-                      bannerLink: selectedNewsletterForDetail.bannerLink,
-                      utmSource: selectedNewsletterForDetail.utmSource,
-                      utmMedium: selectedNewsletterForDetail.utmMedium,
-                      utmCampaign: selectedNewsletterForDetail.utmCampaign,
-                      utmTerm: selectedNewsletterForDetail.utmTerm,
-                      utmContent: selectedNewsletterForDetail.utmContent,
-                      buttonLink: selectedNewsletterForDetail.buttonLink,
-                      buttonUtmSource: selectedNewsletterForDetail.buttonUtmSource,
-                      buttonUtmMedium: selectedNewsletterForDetail.buttonUtmMedium,
-                      buttonUtmCampaign: selectedNewsletterForDetail.buttonUtmCampaign,
-                      buttonUtmTerm: selectedNewsletterForDetail.buttonUtmTerm,
-                      buttonUtmContent: selectedNewsletterForDetail.buttonUtmContent,
-                      contenuHaut: selectedNewsletterForDetail.contenuMailHaut,
-                      contenuBas: selectedNewsletterForDetail.contenuMailBas,
-                      texteButton: selectedNewsletterForDetail.texteButton,
-                    })
-                    setMailPreviewOpen(true)
-                  }}
-                >
-                  <Eye className="mr-2 h-4 w-4" /> Visualiser
-                </Button>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                <h3 className="text-lg font-medium">Qu'est-ce qu'une newsletter ?</h3>
-                <p>
-                  Une newsletter est un email envoyé régulièrement à vos clients pour les informer de vos nouveautés, promotions ou actualités. Elle permet de fidéliser votre audience et de générer du trafic vers votre site.
-                </p>
-                <h3 className="text-lg font-medium">Structure d'une newsletter</h3>
-                <div className="space-y-2 border rounded-md p-4 bg-gray-50">
-                  <p>Chaque newsletter est composée des éléments suivants :</p>
-                  <ul className="list-disc pl-6 space-y-2">
-                    <li><strong>Objet</strong> : Le sujet de l'email</li>
-                    <li><strong>Pré-en-tête</strong> : Le texte d'aperçu visible dans la boîte de réception</li>
-                    <li><strong>Contenu</strong> : Le corps de l'email, souvent en HTML</li>
-                    <li><strong>Template</strong> : Le modèle graphique utilisé</li>
-                    <li><strong>Critère d'inscription</strong> : Envoi uniquement aux utilisateurs inscrits à la newsletter</li>
-                  </ul>
-                </div>
-                <h3 className="text-lg font-medium">Statistiques</h3>
-                <p>Pour chaque newsletter, vous pouvez consulter des statistiques détaillées :</p>
-                <ul className="list-disc pl-6 space-y-2">
-                  <li>Nombre d'emails envoyés</li>
-                  <li>Nombre d'ouvertures</li>
-                  <li>Nombre de clics</li>
-                  <li>Nombre de désabonnements</li>
-                </ul>
-              </div>
-            )}
+          <CardContent>
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="bg-gray-100 font-medium sticky left-0 z-10">Newsletter</TableHead>
+                    <TableHead className="text-right bg-blue-50">Site</TableHead>
+                    <TableHead className="text-right bg-blue-50">Envoyés</TableHead>
+                    <TableHead className="text-right bg-blue-50">Ouverts</TableHead>
+                    <TableHead className="text-right bg-blue-50">Taux d'ouverture</TableHead>
+                    <TableHead className="text-right bg-yellow-50">Clics</TableHead>
+                    <TableHead className="text-right bg-yellow-50">Taux de clic</TableHead>
+                    <TableHead className="text-right bg-green-50">Désabonnements</TableHead>
+                    <TableHead className="text-right bg-green-50">Dernier envoi</TableHead>
+                    <TableHead className="text-right bg-yellow-50">Statut</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {newsletters.map((nl) => (
+                    <TableRow key={nl.name}>
+                      <TableCell className="font-medium sticky left-0 bg-white z-10">{nl.name}</TableCell>
+                      <TableCell className="text-right bg-blue-50">{nl.siteId}</TableCell>
+                      <TableCell className="text-right bg-blue-50">{nl.stats.sent}</TableCell>
+                      <TableCell className="text-right bg-blue-50">{nl.stats.opened}</TableCell>
+                      <TableCell className="text-right bg-blue-50">
+                        {nl.stats.sent > 0 ? ((nl.stats.opened / nl.stats.sent) * 100).toFixed(1) : "0"}%
+                      </TableCell>
+                      <TableCell className="text-right bg-yellow-50">{nl.stats.clicked}</TableCell>
+                      <TableCell className="text-right bg-yellow-50">
+                        {nl.stats.opened > 0 ? ((nl.stats.clicked / nl.stats.opened) * 100).toFixed(1) : "0"}%
+                      </TableCell>
+                      <TableCell className="text-right bg-green-50">{nl.stats.unsubscribed}</TableCell>
+                      <TableCell className="text-right bg-green-50">
+                        {nl.lastSent ? new Date(nl.lastSent).toLocaleDateString("fr-FR") : "Jamais"}
+                      </TableCell>
+                      <TableCell className="text-right bg-yellow-50">
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                          nl.actif ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
+                        }`}>
+                          {nl.actif ? "Actif" : "Inactif"}
+                        </span>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
           </CardContent>
         </Card>
       </TabsContent>

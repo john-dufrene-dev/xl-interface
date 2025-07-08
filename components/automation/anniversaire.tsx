@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { DataTable } from "@/components/data-table"
 import { AnniversaireForm } from "@/components/automation/anniversaire-form"
-import { AnniversaireStats } from "@/components/automation/anniversaire-stats"
+
 import { FilterBar } from "@/components/filter-bar"
 import { MailPreview } from "@/components/automation/mail-preview"
 import {
@@ -22,6 +22,22 @@ import {
 } from "@/components/ui/alert-dialog"
 import { useToast } from "@/hooks/use-toast"
 import type { AnniversaireStep } from "@/types/anniversaire-step" // Declare AnniversaireStep here
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+  LineChart,
+  Line,
+  PieChart,
+  Pie,
+  Cell,
+} from "recharts"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 
 // Types pour les scénarios d'anniversaire
 type Scenario = {
@@ -230,7 +246,7 @@ export default function AnniversaireAutomation() {
   const [filteredScenarios, setFilteredScenarios] = useState<Scenario[]>(scenariosExempleInitial)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [scenarioToDelete, setScenarioToDelete] = useState<Scenario | null>(null)
-  const [selectedScenarioForDetail, setSelectedScenarioForDetail] = useState<Scenario | null>(null)
+
   const [mailPreviewOpen, setMailPreviewOpen] = useState(false)
   const [previewMail, setPreviewMail] = useState<{
     titreMail?: string
@@ -314,11 +330,6 @@ export default function AnniversaireAutomation() {
     }
     setDeleteDialogOpen(false)
     setScenarioToDelete(null)
-  }
-
-  const handleViewScenarioDetail = (scenario: Scenario) => {
-    setSelectedScenarioForDetail(scenario)
-    setActiveTab("detail")
   }
 
   const handleSubmitScenario = (scenario: Scenario) => {
@@ -430,9 +441,7 @@ export default function AnniversaireAutomation() {
           >
             <Eye className="h-4 w-4" />
           </Button>
-          <Button variant="ghost" size="icon" title="Détail" onClick={() => handleViewScenarioDetail(row.original)}>
-            <Info className="h-4 w-4" />
-          </Button>
+
           <Button variant="ghost" size="icon" title="Statistiques" onClick={() => setActiveTab("statistiques")}>
             <BarChart4 className="h-4 w-4" />
           </Button>
@@ -462,7 +471,6 @@ export default function AnniversaireAutomation() {
           <TabsList>
             <TabsTrigger value="liste">Liste des scénarios</TabsTrigger>
             <TabsTrigger value="statistiques">Statistiques</TabsTrigger>
-            <TabsTrigger value="detail">Détail</TabsTrigger>
           </TabsList>
           {activeTab === "liste" && (
             <Button onClick={handleCreateScenario}>
@@ -487,10 +495,6 @@ export default function AnniversaireAutomation() {
                 <CardTitle>Scénarios d'anniversaire</CardTitle>
                 <CardDescription>Gérez vos scénarios d'emails d'anniversaire pour vos clients</CardDescription>
               </div>
-              <Button variant="outline" size="sm" onClick={() => setActiveTab("detail")}>
-                <Info className="mr-2 h-4 w-4" />
-                Détail
-              </Button>
             </CardHeader>
             <CardContent>
               {filteredScenarios.length === 0 ? (
@@ -526,383 +530,352 @@ export default function AnniversaireAutomation() {
           />
         </TabsContent>
         <TabsContent value="statistiques">
-          <AnniversaireStats />
-        </TabsContent>
-        <TabsContent value="detail" className="space-y-4">
-          <div className="mb-4">
-            <Button
-              variant="outline"
-              onClick={() => {
-                setActiveTab("liste")
-                setSelectedScenarioForDetail(null)
-              }}
-            >
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Retour à la liste
-            </Button>
+          <FilterBar
+            onDateChange={setDateRange}
+            onSiteChange={setSelectedSite}
+            onReset={handleResetFilters}
+            dateValue={dateRange}
+            siteValue={selectedSite}
+          />
+
+          {/* Cards d'indicateurs clés */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-base">Clients concernés</CardTitle>
+                <CardDescription className="text-xs">Total sur tous les scénarios</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold">
+                  {scenarios.reduce((acc, sc) => acc + sc.statistiques.totalClients, 0)}
+                </div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-base">Emails envoyés</CardTitle>
+                <CardDescription className="text-xs">Total sur tous les scénarios</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold">
+                  {scenarios.reduce((acc, sc) => acc + sc.statistiques.emailsEnvoyes, 0)}
+                </div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-base">Offres utilisées</CardTitle>
+                <CardDescription className="text-xs">Total sur tous les scénarios</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold">
+                  {scenarios.reduce((acc, sc) => acc + sc.statistiques.offresUtilisees, 0)}
+                </div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-base">Taux de conversion</CardTitle>
+                <CardDescription className="text-xs">Moyenne globale</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold">
+                  {(() => {
+                    const totalEmails = scenarios.reduce((acc, sc) => acc + sc.statistiques.emailsEnvoyes, 0)
+                    const totalOffres = scenarios.reduce((acc, sc) => acc + sc.statistiques.offresUtilisees, 0)
+                    return totalEmails > 0 ? ((totalOffres / totalEmails) * 100).toFixed(1) : "0"
+                  })()}%
+                </div>
+              </CardContent>
+            </Card>
           </div>
+
+          {/* Graphiques principaux */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-8">
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle>Performance par scénario</CardTitle>
+                    <CardDescription>Emails envoyés vs offres utilisées</CardDescription>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="h-[350px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart
+                      data={scenarios}
+                      margin={{
+                        top: 5,
+                        right: 30,
+                        left: 20,
+                        bottom: 5,
+                      }}
+                    >
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="nom" />
+                      <YAxis />
+                      <Tooltip />
+                      <Legend />
+                      <Bar dataKey="statistiques.emailsEnvoyes" name="Emails envoyés" fill="#3b82f6" />
+                      <Bar dataKey="statistiques.offresUtilisees" name="Offres utilisées" fill="#10b981" />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle>Taux de conversion par scénario</CardTitle>
+                    <CardDescription>Performance des offres</CardDescription>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="h-[350px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart
+                      data={scenarios}
+                      margin={{
+                        top: 5,
+                        right: 30,
+                        left: 20,
+                        bottom: 5,
+                      }}
+                    >
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="nom" />
+                      <YAxis />
+                      <Tooltip formatter={(value) => [`${value}%`, "Taux de conversion"]} />
+                      <Bar dataKey="statistiques.tauxConversion" name="Taux de conversion" fill="#f59e0b" />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Graphiques de taux */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-8">
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle>Évolution des performances</CardTitle>
+                    <CardDescription>Tendances sur 6 mois</CardDescription>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="h-[350px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart
+                      data={[
+                        { mois: "Jan", emails: 120, offres: 30, taux: 25.0 },
+                        { mois: "Fév", emails: 145, offres: 38, taux: 26.2 },
+                        { mois: "Mar", emails: 165, offres: 42, taux: 25.5 },
+                        { mois: "Avr", emails: 180, offres: 48, taux: 26.7 },
+                        { mois: "Mai", emails: 190, offres: 52, taux: 27.4 },
+                        { mois: "Jun", emails: 180, offres: 45, taux: 25.0 },
+                      ]}
+                      margin={{
+                        top: 5,
+                        right: 30,
+                        left: 20,
+                        bottom: 5,
+                      }}
+                    >
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="mois" />
+                      <YAxis yAxisId="left" />
+                      <YAxis yAxisId="right" orientation="right" />
+                      <Tooltip />
+                      <Legend />
+                      <Line yAxisId="left" type="monotone" dataKey="emails" name="Emails envoyés" stroke="#3b82f6" strokeWidth={2} />
+                      <Line yAxisId="left" type="monotone" dataKey="offres" name="Offres utilisées" stroke="#10b981" strokeWidth={2} />
+                      <Line yAxisId="right" type="monotone" dataKey="taux" name="Taux de conversion (%)" stroke="#f59e0b" strokeWidth={2} />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle>Répartition des offres</CardTitle>
+                    <CardDescription>Part de chaque scénario</CardDescription>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="h-[350px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={scenarios.map(sc => ({
+                          name: sc.nom,
+                          value: sc.statistiques.offresUtilisees
+                        }))}
+                        cx="50%"
+                        cy="50%"
+                        labelLine={true}
+                        label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                        outerRadius={120}
+                        fill="#8884d8"
+                        dataKey="value"
+                      >
+                        {scenarios.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={["#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6"][index % 5]} />
+                        ))}
+                      </Pie>
+                      <Tooltip formatter={(value) => [value, "Offres utilisées"]} />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Tableaux thématiques */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-8">
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle>Performance des scénarios</CardTitle>
+                    <CardDescription>Emails et offres par scénario</CardDescription>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="bg-gray-100 font-medium">Scénario</TableHead>
+                        <TableHead className="text-right bg-blue-50">Site</TableHead>
+                        <TableHead className="text-right bg-blue-50">Emails envoyés</TableHead>
+                        <TableHead className="text-right bg-green-50">Offres utilisées</TableHead>
+                        <TableHead className="text-right bg-green-50">Taux de conversion</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {scenarios.map((sc) => (
+                        <TableRow key={sc.nom}>
+                          <TableCell className="font-medium">{sc.nom}</TableCell>
+                          <TableCell className="text-right bg-blue-50">{sc.siteName}</TableCell>
+                          <TableCell className="text-right bg-blue-50">{sc.statistiques.emailsEnvoyes}</TableCell>
+                          <TableCell className="text-right bg-green-50">{sc.statistiques.offresUtilisees}</TableCell>
+                          <TableCell className="text-right bg-green-50">{sc.statistiques.tauxConversion}%</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle>Impact financier</CardTitle>
+                    <CardDescription>CA généré par scénario</CardDescription>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="bg-gray-100 font-medium">Scénario</TableHead>
+                        <TableHead className="text-right bg-blue-50">Site</TableHead>
+                        <TableHead className="text-right bg-blue-50">Offres utilisées</TableHead>
+                        <TableHead className="text-right bg-green-50">CA généré</TableHead>
+                        <TableHead className="text-right bg-green-50">CA moyen/offre</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {scenarios.map((sc) => (
+                        <TableRow key={sc.nom}>
+                          <TableCell className="font-medium">{sc.nom}</TableCell>
+                          <TableCell className="text-right bg-blue-50">{sc.siteName}</TableCell>
+                          <TableCell className="text-right bg-blue-50">{sc.statistiques.offresUtilisees}</TableCell>
+                          <TableCell className="text-right bg-green-50">{sc.statistiques.caGenere.toLocaleString()}€</TableCell>
+                          <TableCell className="text-right bg-green-50">
+                            {sc.statistiques.offresUtilisees > 0 
+                              ? (sc.statistiques.caGenere / sc.statistiques.offresUtilisees).toFixed(0) 
+                              : "0"}€
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Tableau synthèse */}
           <Card>
             <CardHeader>
-              <CardTitle>
-                {selectedScenarioForDetail
-                  ? `Détails du scénario: ${selectedScenarioForDetail.nom}`
-                  : "Comprendre les scénarios d'anniversaire"}
-              </CardTitle>
-              <CardDescription>
-                {selectedScenarioForDetail
-                  ? `Informations détaillées sur le scénario d'anniversaire pour ${selectedScenarioForDetail.siteName}`
-                  : "Explication détaillée du fonctionnement des scénarios d'emails d'anniversaire"}
-              </CardDescription>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle>Synthèse complète</CardTitle>
+                  <CardDescription>Vue d'ensemble de tous les scénarios</CardDescription>
+                </div>
+              </div>
             </CardHeader>
-            <CardContent className="space-y-4">
-              {selectedScenarioForDetail ? (
-                <div className="space-y-6">
-                  <Card className="border shadow-sm">
-                    <CardHeader className="bg-muted/50 pb-3">
-                      <CardTitle className="text-base font-medium">Informations de base</CardTitle>
-                    </CardHeader>
-                    <CardContent className="pt-4">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                          <p className="text-sm text-muted-foreground">Nom du scénario</p>
-                          <p className="font-medium">{selectedScenarioForDetail.nom}</p>
-                        </div>
-                        <div>
-                          <p className="text-sm text-muted-foreground">Site concerné</p>
-                          <p className="font-medium">{selectedScenarioForDetail.siteName}</p>
-                        </div>
-                        <div>
-                          <p className="text-sm text-muted-foreground">Date de création</p>
-                          <p className="font-medium">
-                            {new Date(selectedScenarioForDetail.dateCreation).toLocaleDateString("fr-FR", {
-                              day: "2-digit",
-                              month: "2-digit",
-                              year: "numeric",
-                              hour: "2-digit",
-                              minute: "2-digit",
-                            })}
-                          </p>
-                        </div>
-                        <div>
-                          <p className="text-sm text-muted-foreground">Statut</p>
-                          <span
-                            className={`px-2 py-1 rounded-full text-xs font-medium ${
-                              selectedScenarioForDetail.actif
-                                ? "bg-green-100 text-green-800"
-                                : "bg-red-100 text-red-800"
-                            }`}
-                          >
-                            {selectedScenarioForDetail.actif ? "Actif" : "Inactif"}
+            <CardContent>
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="bg-gray-100 font-medium sticky left-0 z-10">Scénario</TableHead>
+                      <TableHead className="text-right bg-blue-50">Site</TableHead>
+                      <TableHead className="text-right bg-blue-50">Clients concernés</TableHead>
+                      <TableHead className="text-right bg-blue-50">Emails envoyés</TableHead>
+                      <TableHead className="text-right bg-blue-50">Offres utilisées</TableHead>
+                      <TableHead className="text-right bg-blue-50">Taux de conversion</TableHead>
+                      <TableHead className="text-right bg-green-50">CA généré</TableHead>
+                      <TableHead className="text-right bg-green-50">CA moyen/offre</TableHead>
+                      <TableHead className="text-right bg-yellow-50">Statut</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {scenarios.map((sc) => (
+                      <TableRow key={sc.nom}>
+                        <TableCell className="font-medium sticky left-0 bg-white z-10">{sc.nom}</TableCell>
+                        <TableCell className="text-right bg-blue-50">{sc.siteName}</TableCell>
+                        <TableCell className="text-right bg-blue-50">{sc.statistiques.totalClients}</TableCell>
+                        <TableCell className="text-right bg-blue-50">{sc.statistiques.emailsEnvoyes}</TableCell>
+                        <TableCell className="text-right bg-blue-50">{sc.statistiques.offresUtilisees}</TableCell>
+                        <TableCell className="text-right bg-blue-50">{sc.statistiques.tauxConversion}%</TableCell>
+                        <TableCell className="text-right bg-green-50">{sc.statistiques.caGenere.toLocaleString()}€</TableCell>
+                        <TableCell className="text-right bg-green-50">
+                          {sc.statistiques.offresUtilisees > 0 
+                            ? (sc.statistiques.caGenere / sc.statistiques.offresUtilisees).toFixed(0) 
+                            : "0"}€
+                        </TableCell>
+                        <TableCell className="text-right bg-yellow-50">
+                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                            sc.actif ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
+                          }`}>
+                            {sc.actif ? "Actif" : "Inactif"}
                           </span>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-
-                  <Card className="border shadow-sm">
-                    <CardHeader className="bg-muted/50 pb-3 flex flex-row justify-between items-center">
-                      <CardTitle className="text-base font-medium">Configuration du mail principal</CardTitle>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handlePreviewScenarioMail(selectedScenarioForDetail)}
-                      >
-                        <Eye className="mr-2 h-4 w-4" />
-                        Visualiser le mail
-                      </Button>
-                    </CardHeader>
-                    <CardContent className="pt-4 space-y-4">
-                      <div className="grid grid-cols-1 gap-4 border rounded-md p-4 bg-muted/20">
-                        {selectedScenarioForDetail.sujetMail && (
-                          <div>
-                            <p className="text-sm text-muted-foreground">Objet du mail</p>
-                            <p className="font-medium">{selectedScenarioForDetail.sujetMail}</p>
-                          </div>
-                        )}
-                        {selectedScenarioForDetail.texteApercu && (
-                          <div>
-                            <p className="text-sm text-muted-foreground">Texte d'aperçu</p>
-                            <p className="font-medium">{selectedScenarioForDetail.texteApercu}</p>
-                          </div>
-                        )}
-                        {selectedScenarioForDetail.titreMail && (
-                          <div>
-                            <p className="text-sm text-muted-foreground">Titre du mail</p>
-                            <p className="font-medium">{selectedScenarioForDetail.titreMail}</p>
-                          </div>
-                        )}
-                        {selectedScenarioForDetail.imageUrl && (
-                          <div>
-                            <p className="text-sm text-muted-foreground">Image du mail</p>
-                            <div className="mt-2 border rounded-md p-2">
-                              <img
-                                src={selectedScenarioForDetail.imageUrl || "/placeholder.svg"}
-                                alt="Image du mail"
-                                className="max-w-full h-auto"
-                              />
-                            </div>
-                          </div>
-                        )}
-                        {selectedScenarioForDetail.contenuMailHaut && (
-                          <div>
-                            <p className="text-sm text-muted-foreground">Contenu du mail (partie haute)</p>
-                            <p className="text-sm border rounded-md p-3 bg-white">
-                              {selectedScenarioForDetail.contenuMailHaut}
-                            </p>
-                          </div>
-                        )}
-                        {selectedScenarioForDetail.contenuMailBas && (
-                          <div>
-                            <p className="text-sm text-muted-foreground">Contenu du mail (partie basse)</p>
-                            <p className="text-sm border rounded-md p-3 bg-white">
-                              {selectedScenarioForDetail.contenuMailBas}
-                            </p>
-                          </div>
-                        )}
-                        {selectedScenarioForDetail.texteButton && (
-                          <div>
-                            <p className="text-sm text-muted-foreground">Texte du bouton</p>
-                            <p className="font-medium">{selectedScenarioForDetail.texteButton}</p>
-                          </div>
-                        )}
-                        {selectedScenarioForDetail.bannerLink && (
-                          <div>
-                            <p className="text-sm text-muted-foreground">Lien de la bannière</p>
-                            <p className="font-medium break-all">{selectedScenarioForDetail.bannerLink}</p>
-                          </div>
-                        )}
-                        {selectedScenarioForDetail.buttonLink && (
-                          <div>
-                            <p className="text-sm text-muted-foreground">Lien du bouton</p>
-                            <p className="font-medium break-all">{selectedScenarioForDetail.buttonLink}</p>
-                          </div>
-                        )}
-                        {(selectedScenarioForDetail.utmSource ||
-                          selectedScenarioForDetail.utmMedium ||
-                          selectedScenarioForDetail.utmCampaign ||
-                          selectedScenarioForDetail.utmTerm ||
-                          selectedScenarioForDetail.utmContent) && (
-                          <div>
-                            <p className="text-sm text-muted-foreground">Paramètres UTM de la bannière</p>
-                            <div className="grid grid-cols-2 gap-2 mt-1 text-sm">
-                              {selectedScenarioForDetail.utmSource && (
-                                <div>
-                                  <span className="font-medium">Source:</span> {selectedScenarioForDetail.utmSource}
-                                </div>
-                              )}
-                              {selectedScenarioForDetail.utmMedium && (
-                                <div>
-                                  <span className="font-medium">Medium:</span> {selectedScenarioForDetail.utmMedium}
-                                </div>
-                              )}
-                              {selectedScenarioForDetail.utmCampaign && (
-                                <div>
-                                  <span className="font-medium">Campaign:</span> {selectedScenarioForDetail.utmCampaign}
-                                </div>
-                              )}
-                              {selectedScenarioForDetail.utmTerm && (
-                                <div>
-                                  <span className="font-medium">Term:</span> {selectedScenarioForDetail.utmTerm}
-                                </div>
-                              )}
-                              {selectedScenarioForDetail.utmContent && (
-                                <div>
-                                  <span className="font-medium">Content:</span> {selectedScenarioForDetail.utmContent}
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        )}
-                        {(selectedScenarioForDetail.buttonUtmSource ||
-                          selectedScenarioForDetail.buttonUtmMedium ||
-                          selectedScenarioForDetail.buttonUtmCampaign ||
-                          selectedScenarioForDetail.buttonUtmTerm ||
-                          selectedScenarioForDetail.buttonUtmContent) && (
-                          <div>
-                            <p className="text-sm text-muted-foreground">Paramètres UTM du bouton</p>
-                            <div className="grid grid-cols-2 gap-2 mt-1 text-sm">
-                              {selectedScenarioForDetail.buttonUtmSource && (
-                                <div>
-                                  <span className="font-medium">Source:</span>{" "}
-                                  {selectedScenarioForDetail.buttonUtmSource}
-                                </div>
-                              )}
-                              {selectedScenarioForDetail.buttonUtmMedium && (
-                                <div>
-                                  <span className="font-medium">Medium:</span>{" "}
-                                  {selectedScenarioForDetail.buttonUtmMedium}
-                                </div>
-                              )}
-                              {selectedScenarioForDetail.buttonUtmCampaign && (
-                                <div>
-                                  <span className="font-medium">Campaign:</span>{" "}
-                                  {selectedScenarioForDetail.buttonUtmCampaign}
-                                </div>
-                              )}
-                              {selectedScenarioForDetail.buttonUtmTerm && (
-                                <div>
-                                  <span className="font-medium">Term:</span> {selectedScenarioForDetail.buttonUtmTerm}
-                                </div>
-                              )}
-                              {selectedScenarioForDetail.buttonUtmContent && (
-                                <div>
-                                  <span className="font-medium">Content:</span>{" "}
-                                  {selectedScenarioForDetail.buttonUtmContent}
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    </CardContent>
-                  </Card>
-
-                  <Card className="border shadow-sm">
-                    <CardHeader className="bg-muted/50 pb-3">
-                      <CardTitle className="text-base font-medium">Critères d'inscription</CardTitle>
-                    </CardHeader>
-                    <CardContent className="pt-4">
-                      <div className="p-4 bg-muted/20 rounded-md grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                          <p className="text-sm text-muted-foreground">Offre spéciale</p>
-                          <p className="font-medium">{selectedScenarioForDetail.criteres.offreSpeciale}</p>
-                        </div>
-                        <div>
-                          <p className="text-sm text-muted-foreground">Durée de validité</p>
-                          <p className="font-medium">{selectedScenarioForDetail.criteres.dureeValidite} jour(s)</p>
-                        </div>
-                      </div>
-                      {selectedScenarioForDetail.criteres.bonReductionActif !== undefined && (
-                        <div className="p-4 bg-muted/20 rounded-md mt-4">
-                          <p className="mb-2">
-                            <span className="font-medium">Bon de réduction: </span>
-                            <span
-                              className={`px-2 py-1 rounded-full text-xs font-medium ${
-                                selectedScenarioForDetail.criteres.bonReductionActif
-                                  ? "bg-green-100 text-green-800"
-                                  : "bg-red-100 text-red-800"
-                              }`}
-                            >
-                              {selectedScenarioForDetail.criteres.bonReductionActif ? "Activé" : "Désactivé"}
-                            </span>
-                          </p>
-                          {selectedScenarioForDetail.criteres.bonReductionActif && (
-                            <div className="mt-2">
-                              <p>
-                                <span className="font-medium">Réduction: </span>
-                                {selectedScenarioForDetail.criteres.montantReduction}{" "}
-                                {selectedScenarioForDetail.criteres.typeReduction === "pourcentage" ? "%" : "€"}
-                              </p>
-                            </div>
-                          )}
-                        </div>
-                      )}
-                    </CardContent>
-                  </Card>
-
-                  <Card className="border shadow-sm">
-                    <CardHeader className="bg-muted/50 pb-3">
-                      <CardTitle className="text-base font-medium">Statistiques</CardTitle>
-                    </CardHeader>
-                    <CardContent className="pt-4">
-                      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-                        <div className="bg-muted/20 p-4 rounded-lg">
-                          <p className="text-sm text-muted-foreground">Total clients</p>
-                          <p className="text-2xl font-bold">{selectedScenarioForDetail.statistiques.totalClients}</p>
-                        </div>
-                        <div className="bg-muted/20 p-4 rounded-lg">
-                          <p className="text-sm text-muted-foreground">Emails envoyés</p>
-                          <p className="text-2xl font-bold">{selectedScenarioForDetail.statistiques.emailsEnvoyes}</p>
-                        </div>
-                        <div className="bg-muted/20 p-4 rounded-lg">
-                          <p className="text-sm text-muted-foreground">Offres utilisées</p>
-                          <p className="text-2xl font-bold">{selectedScenarioForDetail.statistiques.offresUtilisees}</p>
-                        </div>
-                        <div className="bg-muted/20 p-4 rounded-lg">
-                          <p className="text-sm text-muted-foreground">Taux de conversion</p>
-                          <p className="text-2xl font-bold">{selectedScenarioForDetail.statistiques.tauxConversion}%</p>
-                        </div>
-                        <div className="bg-muted/20 p-4 rounded-lg">
-                          <p className="text-sm text-muted-foreground">CA généré</p>
-                          <p className="text-2xl font-bold">{selectedScenarioForDetail.statistiques.caGenere}€</p>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  <h3 className="text-lg font-medium">Qu'est-ce qu'un scénario d'anniversaire ?</h3>
-                  <p>
-                    Un scénario d'anniversaire est une séquence automatisée d'emails envoyés aux clients à l'occasion de
-                    leur anniversaire. L'objectif est de créer un lien émotionnel avec le client en lui souhaitant un
-                    joyeux anniversaire et de l'encourager à effectuer un achat grâce à une offre spéciale.
-                  </p>
-
-                  <h3 className="text-lg font-medium">Structure d'un mail d'anniversaire</h3>
-                  <div className="space-y-2 border rounded-md p-4 bg-gray-50">
-                    <p>Chaque mail d'anniversaire est composé des éléments suivants :</p>
-                    <ul className="list-disc pl-6 space-y-2">
-                      <li>
-                        <strong>Objet du mail</strong> : L'objet qui apparaît dans la boîte de réception du client (ex:
-                        "🎂 Joyeux Anniversaire ! Un cadeau vous attend")
-                      </li>
-                      <li>
-                        <strong>Texte d'aperçu</strong> : Le texte qui apparaît comme prévisualisation dans certains
-                        clients mail (ex: "Pour célébrer votre anniversaire, nous vous offrons...")
-                      </li>
-                      <li>
-                        <strong>Titre du mail</strong> : Le titre qui apparaît dans l'en-tête du mail (ex: "Joyeux
-                        Anniversaire de la part de notre équipe")
-                      </li>
-                      <li>
-                        <strong>Image du mail</strong> : Une bannière ou image festive qui apparaît en haut du mail
-                      </li>
-                      <li>
-                        <strong>Contenu du mail (partie haute)</strong> : Le message d'anniversaire et la présentation
-                        de l'offre
-                      </li>
-                      <li>
-                        <strong>Contenu du mail (partie basse)</strong> : Les détails de l'offre et les conditions
-                        d'utilisation
-                      </li>
-                      <li>
-                        <strong>Texte du bouton</strong> : Le texte du bouton d'action (ex: "Profiter de mon cadeau")
-                      </li>
-                      <li>
-                        <strong>Liens et paramètres UTM</strong> : Les liens de la bannière et du bouton, ainsi que les
-                        paramètres de suivi UTM pour analyser les performances
-                      </li>
-                    </ul>
-                  </div>
-
-                  <h3 className="text-lg font-medium">Comment fonctionne un scénario d'anniversaire ?</h3>
-                  <p>
-                    Le scénario d'anniversaire permet d'envoyer automatiquement un email personnalisé le jour de
-                    l'anniversaire du client, avec une offre spéciale pour l'occasion.
-                  </p>
-
-                  <h3 className="text-lg font-medium">Critères d'inscription</h3>
-                  <p>
-                    Les critères d'inscription déterminent l'offre que recevront les clients pour leur anniversaire.
-                    Vous pouvez définir :
-                  </p>
-                  <ul className="list-disc pl-6 space-y-2">
-                    <li>L'offre spéciale proposée (réduction, cadeau, etc.)</li>
-                    <li>La durée de validité de l'offre</li>
-                  </ul>
-
-                  <h3 className="text-lg font-medium">Statistiques</h3>
-                  <p>Pour chaque scénario, vous pouvez consulter des statistiques détaillées :</p>
-                  <ul className="list-disc pl-6 space-y-2">
-                    <li>Nombre total de clients concernés</li>
-                    <li>Nombre d'emails envoyés</li>
-                    <li>Nombre d'offres utilisées</li>
-                    <li>Taux de conversion</li>
-                    <li>Chiffre d'affaires généré</li>
-                  </ul>
-                </div>
-              )}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>

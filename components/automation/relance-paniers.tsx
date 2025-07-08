@@ -21,6 +21,22 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import { useToast } from "@/hooks/use-toast"
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+  LineChart,
+  Line,
+  PieChart,
+  Pie,
+  Cell,
+} from "recharts"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 
 // Types pour les scénarios de relance
 type RelanceStep = {
@@ -392,7 +408,7 @@ const columns = [
     id: "nom",
     accessorKey: "nom",
     header: "Nom du scénario",
-    cell: ({ row }) => (
+    cell: ({ row }: { row: { original: Scenario } }) => (
       <div>
         <div className="font-medium">{row.original.nom}</div>
         <div className="text-sm text-muted-foreground">Site: {row.original.siteName}</div>
@@ -403,13 +419,13 @@ const columns = [
     id: "etapes",
     accessorKey: "etapes",
     header: "Étapes",
-    cell: ({ row }) => row.original.etapes.length,
+    cell: ({ row }: { row: { original: Scenario } }) => row.original.etapes.length,
   },
   {
     id: "dateCreation",
     accessorKey: "dateCreation",
     header: "Date de création",
-    cell: ({ row }) => {
+    cell: ({ row }: { row: { original: Scenario } }) => {
       const date = new Date(row.original.dateCreation)
       return date.toLocaleDateString("fr-FR", {
         day: "2-digit",
@@ -424,7 +440,7 @@ const columns = [
     id: "actif",
     accessorKey: "actif",
     header: "Statut",
-    cell: ({ row }) => (
+    cell: ({ row }: { row: { original: Scenario } }) => (
       <span
         className={`px-2 py-1 rounded-full text-xs font-medium ${
           row.original.actif ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
@@ -436,17 +452,34 @@ const columns = [
   },
 ]
 
+// Nouvelle structure de statistiques basée sur la structure SQL
+// Les données seraient normalement récupérées via une API ou une requête SQL sur les tables :
+// - itekstats_relance_scenario_mail (is_send, is_open, nb_opened)
+// - itekstats_relance_scenario_mail_click (pour les clics)
+
+// Exemple de structure de stats pour affichage (à remplacer par des requêtes réelles côté back)
+const getScenarioStats = (scenarioId: string) => {
+  // Ces valeurs sont fictives, à remplacer par des requêtes réelles
+  return {
+    nbMailsSent: 120, // Nombre d'emails envoyés (is_send)
+    nbMailsOpened: 80, // Nombre d'emails ouverts (is_open)
+    nbOpenedTotal: 150, // Nombre total d'ouvertures (nb_opened)
+    nbClicks: 45, // Nombre total de clics (mail_click)
+    openRate: 80 / 120 * 100, // Taux d'ouverture (%)
+    clickRate: 45 / 120 * 100, // Taux de clic (%)
+  }
+}
+
 export default function RelancePaniers() {
   const { toast } = useToast()
   const [activeTab, setActiveTab] = useState("liste")
   const [editingScenario, setEditingScenario] = useState<Scenario | null>(null)
   const [selectedSite, setSelectedSite] = useState<string>("")
-  const [dateRange, setDateRange] = useState<{ from: Date; to: Date } | undefined>(undefined)
+  const [dateRange, setDateRange] = useState<{ from?: Date; to?: Date } | undefined>(undefined)
   const [scenarios, setScenarios] = useState<Scenario[]>(scenariosExempleInitial)
   const [filteredScenarios, setFilteredScenarios] = useState<Scenario[]>(scenariosExempleInitial)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [scenarioToDelete, setScenarioToDelete] = useState<Scenario | null>(null)
-  const [selectedScenarioForDetail, setSelectedScenarioForDetail] = useState<Scenario | null>(null)
   const [mailPreviewOpen, setMailPreviewOpen] = useState(false)
   const [previewMail, setPreviewMail] = useState<{
     titreMail?: string
@@ -470,6 +503,33 @@ export default function RelancePaniers() {
     texteButton?: string
   }>({})
   const [selectedStepForPreview, setSelectedStepForPreview] = useState<RelanceStep | null>(null)
+
+  // Génération de métriques factices par scénario
+  const scenarioMetrics = scenarios.map((s) => {
+    // Simule des valeurs réalistes
+    const paniers_relances = Math.floor(Math.random() * 120 + 30)
+    const paniers_convertis = Math.floor(paniers_relances * (Math.random() * 0.3 + 0.15))
+    const taux_conversion = paniers_relances > 0 ? (paniers_convertis / paniers_relances) * 100 : 0
+    const is_send = paniers_relances + Math.floor(Math.random() * 40)
+    const is_open = Math.floor(is_send * (Math.random() * 0.5 + 0.3))
+    const nb_opened = is_open + Math.floor(is_open * (Math.random() * 1.2))
+    const nb_clicks = Math.floor(is_open * (Math.random() * 0.4 + 0.1))
+    const openRate = is_send > 0 ? (is_open / is_send) * 100 : 0
+    const clickRate = is_send > 0 ? (nb_clicks / is_send) * 100 : 0
+    return {
+      nom: s.nom,
+      site: s.siteName,
+      paniers_relances,
+      paniers_convertis,
+      taux_conversion: taux_conversion.toFixed(1),
+      is_send,
+      is_open,
+      nb_opened,
+      nb_clicks,
+      openRate: openRate.toFixed(1),
+      clickRate: clickRate.toFixed(1),
+    }
+  })
 
   // Appliquer les filtres
   useEffect(() => {
@@ -532,10 +592,7 @@ export default function RelancePaniers() {
     setScenarioToDelete(null)
   }
 
-  const handleViewScenarioDetail = (scenario: Scenario) => {
-    setSelectedScenarioForDetail(scenario)
-    setActiveTab("detail")
-  }
+
 
   const handleSubmitScenario = (scenario: Scenario) => {
     let updatedScenarios
@@ -627,7 +684,7 @@ export default function RelancePaniers() {
     ...columns,
     {
       id: "actions",
-      cell: ({ row }) => (
+      cell: ({ row }: { row: { original: Scenario } }) => (
         <div className="flex items-center gap-2">
           <Button
             variant="ghost"
@@ -637,9 +694,7 @@ export default function RelancePaniers() {
           >
             <Eye className="h-4 w-4" />
           </Button>
-          <Button variant="ghost" size="icon" title="Détail" onClick={() => handleViewScenarioDetail(row.original)}>
-            <Info className="h-4 w-4" />
-          </Button>
+
           <Button variant="ghost" size="icon" title="Statistiques" onClick={() => setActiveTab("statistiques")}>
             <BarChart4 className="h-4 w-4" />
           </Button>
@@ -669,7 +724,6 @@ export default function RelancePaniers() {
           <TabsList>
             <TabsTrigger value="liste">Liste des scénarios</TabsTrigger>
             <TabsTrigger value="statistiques">Statistiques</TabsTrigger>
-            <TabsTrigger value="detail">Détail</TabsTrigger>
           </TabsList>
           {activeTab === "liste" && (
             <Button onClick={handleCreateScenario}>
@@ -694,10 +748,7 @@ export default function RelancePaniers() {
                 <CardTitle>Scénarios de relance</CardTitle>
                 <CardDescription>Gérez vos scénarios de relance de paniers abandonnés</CardDescription>
               </div>
-              <Button variant="outline" size="sm" onClick={() => setActiveTab("detail")}>
-                <Info className="mr-2 h-4 w-4" />
-                Détail
-              </Button>
+
             </CardHeader>
             <CardContent>
               {filteredScenarios.length === 0 ? (
@@ -733,534 +784,357 @@ export default function RelancePaniers() {
           />
         </TabsContent>
         <TabsContent value="statistiques">
-          <ScenarioStats />
-        </TabsContent>
-        <TabsContent value="detail" className="space-y-4">
-          <div className="mb-4">
-            <Button
-              variant="outline"
-              onClick={() => {
-                setActiveTab("liste")
-                setSelectedScenarioForDetail(null)
-              }}
-            >
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Retour à la liste
-            </Button>
+          <FilterBar
+            onDateChange={setDateRange}
+            onSiteChange={setSelectedSite}
+            onReset={handleResetFilters}
+            dateValue={dateRange}
+            siteValue={selectedSite}
+          />
+
+          {/* Cards d'indicateurs clés */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-base">Paniers relancés</CardTitle>
+                <CardDescription className="text-xs">Total sur tous les scénarios</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold">
+                  {scenarioMetrics.reduce((acc, sc) => acc + sc.paniers_relances, 0)}
+                </div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-base">Paniers convertis</CardTitle>
+                <CardDescription className="text-xs">Total sur tous les scénarios</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold">
+                  {scenarioMetrics.reduce((acc, sc) => acc + sc.paniers_convertis, 0)}
+                </div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-base">Taux de conversion</CardTitle>
+                <CardDescription className="text-xs">Moyenne globale</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold">
+                  {(() => {
+                    const totalRelances = scenarioMetrics.reduce((acc, sc) => acc + sc.paniers_relances, 0)
+                    const totalConvertis = scenarioMetrics.reduce((acc, sc) => acc + sc.paniers_convertis, 0)
+                    return totalRelances > 0 ? ((totalConvertis / totalRelances) * 100).toFixed(1) : "0"
+                  })()}%
+                </div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-base">Emails envoyés</CardTitle>
+                <CardDescription className="text-xs">Total sur tous les scénarios</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold">
+                  {scenarioMetrics.reduce((acc, sc) => acc + sc.is_send, 0)}
+                </div>
+              </CardContent>
+            </Card>
           </div>
+
+          {/* Graphiques principaux */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-8">
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle>Relance & Conversion par scénario</CardTitle>
+                    <CardDescription>Comparaison des performances</CardDescription>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="h-[350px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart
+                      data={scenarioMetrics}
+                      margin={{
+                        top: 5,
+                        right: 30,
+                        left: 20,
+                        bottom: 5,
+                      }}
+                    >
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="nom" />
+                      <YAxis />
+                      <Tooltip />
+                      <Legend />
+                      <Bar dataKey="paniers_relances" name="Paniers relancés" fill="#3b82f6" />
+                      <Bar dataKey="paniers_convertis" name="Paniers convertis" fill="#10b981" />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle>Emailing par scénario</CardTitle>
+                    <CardDescription>Performance des emails</CardDescription>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="h-[350px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart
+                      data={scenarioMetrics}
+                      margin={{
+                        top: 5,
+                        right: 30,
+                        left: 20,
+                        bottom: 5,
+                      }}
+                    >
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="nom" />
+                      <YAxis />
+                      <Tooltip />
+                      <Legend />
+                      <Bar dataKey="is_send" name="Emails envoyés" fill="#3b82f6" />
+                      <Bar dataKey="is_open" name="Emails ouverts" fill="#10b981" />
+                      <Bar dataKey="nb_clicks" name="Clics" fill="#f59e0b" />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Graphiques de taux */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-8">
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle>Taux de performance</CardTitle>
+                    <CardDescription>Comparaison des taux</CardDescription>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="h-[350px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart
+                      data={scenarioMetrics}
+                      margin={{
+                        top: 5,
+                        right: 30,
+                        left: 20,
+                        bottom: 5,
+                      }}
+                    >
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="nom" />
+                      <YAxis />
+                      <Tooltip />
+                      <Legend />
+                      <Line
+                        type="monotone"
+                        dataKey="openRate"
+                        name="Taux d'ouverture (%)"
+                        stroke="#3b82f6"
+                        strokeWidth={2}
+                      />
+                      <Line
+                        type="monotone"
+                        dataKey="clickRate"
+                        name="Taux de clic (%)"
+                        stroke="#f59e0b"
+                        strokeWidth={2}
+                      />
+                      <Line
+                        type="monotone"
+                        dataKey="taux_conversion"
+                        name="Taux de conversion (%)"
+                        stroke="#10b981"
+                        strokeWidth={2}
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle>Répartition des conversions</CardTitle>
+                    <CardDescription>Part de chaque scénario</CardDescription>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="h-[350px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={scenarioMetrics.map(sc => ({
+                          name: sc.nom,
+                          value: sc.paniers_convertis
+                        }))}
+                        cx="50%"
+                        cy="50%"
+                        labelLine={true}
+                        label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                        outerRadius={120}
+                        fill="#8884d8"
+                        dataKey="value"
+                      >
+                        {scenarioMetrics.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={["#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6"][index % 5]} />
+                        ))}
+                      </Pie>
+                      <Tooltip formatter={(value) => [value, "Paniers convertis"]} />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Tableaux thématiques */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-8">
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle>Relance & Conversion</CardTitle>
+                    <CardDescription>Performance des scénarios</CardDescription>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="bg-gray-100 font-medium">Scénario</TableHead>
+                        <TableHead className="text-right bg-blue-50">Site</TableHead>
+                        <TableHead className="text-right bg-blue-50">Paniers relancés</TableHead>
+                        <TableHead className="text-right bg-green-50">Paniers convertis</TableHead>
+                        <TableHead className="text-right bg-green-50">Taux de conversion</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {scenarioMetrics.map((sc) => (
+                        <TableRow key={sc.nom}>
+                          <TableCell className="font-medium">{sc.nom}</TableCell>
+                          <TableCell className="text-right bg-blue-50">{sc.site}</TableCell>
+                          <TableCell className="text-right bg-blue-50">{sc.paniers_relances}</TableCell>
+                          <TableCell className="text-right bg-green-50">{sc.paniers_convertis}</TableCell>
+                          <TableCell className="text-right bg-green-50">{sc.taux_conversion}%</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle>Emailing</CardTitle>
+                    <CardDescription>Performance des emails</CardDescription>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="bg-gray-100 font-medium">Scénario</TableHead>
+                        <TableHead className="text-right bg-blue-50">Emails envoyés</TableHead>
+                        <TableHead className="text-right bg-blue-50">Emails ouverts</TableHead>
+                        <TableHead className="text-right bg-green-50">Taux d'ouverture</TableHead>
+                        <TableHead className="text-right bg-green-50">Total clics</TableHead>
+                        <TableHead className="text-right bg-green-50">Taux de clic</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {scenarioMetrics.map((sc) => (
+                        <TableRow key={sc.nom}>
+                          <TableCell className="font-medium">{sc.nom}</TableCell>
+                          <TableCell className="text-right bg-blue-50">{sc.is_send}</TableCell>
+                          <TableCell className="text-right bg-blue-50">{sc.is_open}</TableCell>
+                          <TableCell className="text-right bg-green-50">{sc.openRate}%</TableCell>
+                          <TableCell className="text-right bg-green-50">{sc.nb_clicks}</TableCell>
+                          <TableCell className="text-right bg-green-50">{sc.clickRate}%</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Tableau synthèse */}
           <Card>
             <CardHeader>
-              <CardTitle>
-                {selectedScenarioForDetail
-                  ? `Détails du scénario: ${selectedScenarioForDetail.nom}`
-                  : "Comprendre les scénarios de relance"}
-              </CardTitle>
-              <CardDescription>
-                {selectedScenarioForDetail
-                  ? `Informations détaillées sur le scénario de relance pour ${selectedScenarioForDetail.siteName}`
-                  : "Explication détaillée du fonctionnement des scénarios de relance de paniers abandonnés"}
-              </CardDescription>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle>Synthèse complète</CardTitle>
+                  <CardDescription>Vue d'ensemble de tous les scénarios</CardDescription>
+                </div>
+              </div>
             </CardHeader>
-            <CardContent className="space-y-4">
-              {selectedScenarioForDetail ? (
-                <div className="space-y-6">
-                  <Card className="border shadow-sm">
-                    <CardHeader className="bg-muted/50 pb-3">
-                      <CardTitle className="text-base font-medium">Informations de base</CardTitle>
-                    </CardHeader>
-                    <CardContent className="pt-4">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                          <p className="text-sm text-muted-foreground">Nom du scénario</p>
-                          <p className="font-medium">{selectedScenarioForDetail.nom}</p>
-                        </div>
-                        <div>
-                          <p className="text-sm text-muted-foreground">Site concerné</p>
-                          <p className="font-medium">{selectedScenarioForDetail.siteName}</p>
-                        </div>
-                        <div>
-                          <p className="text-sm text-muted-foreground">Date de création</p>
-                          <p className="font-medium">
-                            {new Date(selectedScenarioForDetail.dateCreation).toLocaleDateString("fr-FR", {
-                              day: "2-digit",
-                              month: "2-digit",
-                              year: "numeric",
-                              hour: "2-digit",
-                              minute: "2-digit",
-                            })}
-                          </p>
-                        </div>
-                        <div>
-                          <p className="text-sm text-muted-foreground">Statut</p>
-                          <span
-                            className={`px-2 py-1 rounded-full text-xs font-medium ${
-                              selectedScenarioForDetail.actif
-                                ? "bg-green-100 text-green-800"
-                                : "bg-red-100 text-red-800"
-                            }`}
-                          >
-                            {selectedScenarioForDetail.actif ? "Actif" : "Inactif"}
-                          </span>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-
-                  <Card className="border shadow-sm">
-                    <CardHeader className="bg-muted/50 pb-3 flex flex-row justify-between items-center">
-                      <CardTitle className="text-base font-medium">Configuration du mail principal</CardTitle>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handlePreviewScenarioMail(selectedScenarioForDetail)}
-                      >
-                        <Eye className="mr-2 h-4 w-4" />
-                        Visualiser le mail
-                      </Button>
-                    </CardHeader>
-                    <CardContent className="pt-4 space-y-4">
-                      <div className="grid grid-cols-1 gap-4 border rounded-md p-4 bg-muted/20">
-                        {selectedScenarioForDetail.sujetMail && (
-                          <div>
-                            <p className="text-sm text-muted-foreground">Objet du mail</p>
-                            <p className="font-medium">{selectedScenarioForDetail.sujetMail}</p>
-                          </div>
-                        )}
-                        {selectedScenarioForDetail.texteApercu && (
-                          <div>
-                            <p className="text-sm text-muted-foreground">Texte d'aperçu</p>
-                            <p className="font-medium">{selectedScenarioForDetail.texteApercu}</p>
-                          </div>
-                        )}
-                        {selectedScenarioForDetail.titreMail && (
-                          <div>
-                            <p className="text-sm text-muted-foreground">Titre du mail</p>
-                            <p className="font-medium">{selectedScenarioForDetail.titreMail}</p>
-                          </div>
-                        )}
-                        {selectedScenarioForDetail.imageUrl && (
-                          <div>
-                            <p className="text-sm text-muted-foreground">Image du mail</p>
-                            <div className="mt-2 border rounded-md p-2">
-                              <img
-                                src={selectedScenarioForDetail.imageUrl || "/placeholder.svg"}
-                                alt="Image du mail"
-                                className="max-w-full h-auto"
-                              />
-                            </div>
-                          </div>
-                        )}
-                        {selectedScenarioForDetail.contenuMailHaut && (
-                          <div>
-                            <p className="text-sm text-muted-foreground">Contenu du mail (partie haute)</p>
-                            <p className="text-sm border rounded-md p-3 bg-white">
-                              {selectedScenarioForDetail.contenuMailHaut}
-                            </p>
-                          </div>
-                        )}
-                        {selectedScenarioForDetail.contenuMailBas && (
-                          <div>
-                            <p className="text-sm text-muted-foreground">Contenu du mail (partie basse)</p>
-                            <p className="text-sm border rounded-md p-3 bg-white">
-                              {selectedScenarioForDetail.contenuMailBas}
-                            </p>
-                          </div>
-                        )}
-                        {selectedScenarioForDetail.texteButton && (
-                          <div>
-                            <p className="text-sm text-muted-foreground">Texte du bouton</p>
-                            <p className="font-medium">{selectedScenarioForDetail.texteButton}</p>
-                          </div>
-                        )}
-                        {selectedScenarioForDetail.bannerLink && (
-                          <div>
-                            <p className="text-sm text-muted-foreground">Lien de la bannière</p>
-                            <p className="font-medium break-all">{selectedScenarioForDetail.bannerLink}</p>
-                          </div>
-                        )}
-                        {selectedScenarioForDetail.buttonLink && (
-                          <div>
-                            <p className="text-sm text-muted-foreground">Lien du bouton</p>
-                            <p className="font-medium break-all">{selectedScenarioForDetail.buttonLink}</p>
-                          </div>
-                        )}
-                        {(selectedScenarioForDetail.utmSource ||
-                          selectedScenarioForDetail.utmMedium ||
-                          selectedScenarioForDetail.utmCampaign) && (
-                          <div>
-                            <p className="text-sm text-muted-foreground">Paramètres UTM de la bannière</p>
-                            <div className="grid grid-cols-2 gap-2 mt-1 text-sm">
-                              {selectedScenarioForDetail.utmSource && (
-                                <div>
-                                  <span className="font-medium">Source:</span> {selectedScenarioForDetail.utmSource}
-                                </div>
-                              )}
-                              {selectedScenarioForDetail.utmMedium && (
-                                <div>
-                                  <span className="font-medium">Medium:</span> {selectedScenarioForDetail.utmMedium}
-                                </div>
-                              )}
-                              {selectedScenarioForDetail.utmCampaign && (
-                                <div>
-                                  <span className="font-medium">Campaign:</span> {selectedScenarioForDetail.utmCampaign}
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        )}
-                        {(selectedScenarioForDetail.buttonUtmSource ||
-                          selectedScenarioForDetail.buttonUtmMedium ||
-                          selectedScenarioForDetail.buttonUtmCampaign) && (
-                          <div>
-                            <p className="text-sm text-muted-foreground">Paramètres UTM du bouton</p>
-                            <div className="grid grid-cols-2 gap-2 mt-1 text-sm">
-                              {selectedScenarioForDetail.buttonUtmSource && (
-                                <div>
-                                  <span className="font-medium">Source:</span>{" "}
-                                  {selectedScenarioForDetail.buttonUtmSource}
-                                </div>
-                              )}
-                              {selectedScenarioForDetail.buttonUtmMedium && (
-                                <div>
-                                  <span className="font-medium">Medium:</span>{" "}
-                                  {selectedScenarioForDetail.buttonUtmMedium}
-                                </div>
-                              )}
-                              {selectedScenarioForDetail.buttonUtmCampaign && (
-                                <div>
-                                  <span className="font-medium">Campaign:</span>{" "}
-                                  {selectedScenarioForDetail.buttonUtmCampaign}
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    </CardContent>
-                  </Card>
-
-                  <Card className="border shadow-sm">
-                    <CardHeader className="bg-muted/50 pb-3">
-                      <CardTitle className="text-base font-medium">Critères d'inscription</CardTitle>
-                    </CardHeader>
-                    <CardContent className="pt-4">
-                      <div className="p-4 bg-muted/20 rounded-md">
-                        <p>
-                          Les paniers sont considérés comme abandonnés après{" "}
-                          <span className="font-medium">
-                            {selectedScenarioForDetail.criteres.delaiCreation}{" "}
-                            {selectedScenarioForDetail.criteres.delaiCreationUnite === "heures"
-                              ? "heure(s)"
-                              : "jour(s)"}
-                          </span>{" "}
-                          sans activité.
-                        </p>
-                      </div>
-                      {selectedScenarioForDetail.criteres.bonReductionActif !== undefined && (
-                        <div className="p-4 bg-muted/20 rounded-md mt-4">
-                          <p className="mb-2">
-                            <span className="font-medium">Bon de réduction: </span>
-                            <span
-                              className={`px-2 py-1 rounded-full text-xs font-medium ${
-                                selectedScenarioForDetail.criteres.bonReductionActif
-                                  ? "bg-green-100 text-green-800"
-                                  : "bg-red-100 text-red-800"
-                              }`}
-                            >
-                              {selectedScenarioForDetail.criteres.bonReductionActif ? "Activé" : "Désactivé"}
-                            </span>
-                          </p>
-                          {selectedScenarioForDetail.criteres.bonReductionActif && (
-                            <div className="mt-2">
-                              <p>
-                                <span className="font-medium">Réduction: </span>
-                                {selectedScenarioForDetail.criteres.montantReduction} {selectedScenarioForDetail.criteres.typeReduction === "pourcentage" ? "%" : "€"}
-                              </p>
-                            </div>
-                          )}
-                        </div>
-                      )}
-                    </CardContent>
-                  </Card>
-
-                  <Card className="border shadow-sm">
-                    <CardHeader className="bg-muted/50 pb-3">
-                      <CardTitle className="text-base font-medium">
-                        Étapes de relance ({selectedScenarioForDetail.etapes.length})
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="pt-4 space-y-4">
-                      {selectedScenarioForDetail.etapes.map((etape, index) => (
-                        <Card key={etape.id} className="border border-gray-200">
-                          <CardHeader className="bg-muted/30 pb-2 flex flex-row justify-between items-center">
-                            <CardTitle className="text-base">Mail de relance {index + 1}</CardTitle>
-                            <Button variant="outline" size="sm" onClick={() => handlePreviewStepMail(etape)}>
-                              <Eye className="mr-2 h-4 w-4" />
-                              Visualiser
-                            </Button>
-                          </CardHeader>
-                          <CardContent className="pt-4 space-y-4">
-                            <div className="p-3 bg-muted/20 rounded-md">
-                              <p className="text-sm text-muted-foreground">Délai avant envoi</p>
-                              <p className="font-medium">
-                                {etape.delai} {etape.delaiUnite === "heures" ? "heure(s)" : "jour(s)"}
-                                {index === 0 ? " après l'abandon du panier" : " après l'étape précédente"}
-                              </p>
-                            </div>
-
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                              <div>
-                                <p className="text-sm text-muted-foreground">Objet du mail</p>
-                                <p className="font-medium">{etape.sujet}</p>
-                              </div>
-                              {etape.texteApercu && (
-                                <div>
-                                  <p className="text-sm text-muted-foreground">Texte d'aperçu</p>
-                                  <p className="font-medium">{etape.texteApercu}</p>
-                                </div>
-                              )}
-                            </div>
-
-                            {etape.titreMail && (
-                              <div>
-                                <p className="text-sm text-muted-foreground">Titre du mail</p>
-                                <p className="font-medium">{etape.titreMail}</p>
-                              </div>
-                            )}
-
-                            {etape.imageUrl && (
-                              <div>
-                                <p className="text-sm text-muted-foreground">Image du mail</p>
-                                <div className="mt-2 border rounded-md p-2">
-                                  <img
-                                    src={etape.imageUrl || "/placeholder.svg"}
-                                    alt="Image du mail"
-                                    className="max-w-full h-auto"
-                                  />
-                                </div>
-                              </div>
-                            )}
-
-                            <div>
-                              <p className="text-sm text-muted-foreground">Contenu du mail (partie haute)</p>
-                              <p className="text-sm border rounded-md p-3 bg-muted/20">
-                                {etape.contenuHaut || etape.contenu}
-                              </p>
-                            </div>
-
-                            {etape.contenuBas && (
-                              <div>
-                                <p className="text-sm text-muted-foreground">Contenu du mail (partie basse)</p>
-                                <p className="text-sm border rounded-md p-3 bg-muted/20">{etape.contenuBas}</p>
-                              </div>
-                            )}
-
-                            {etape.texteButton && (
-                              <div>
-                                <p className="text-sm text-muted-foreground">Texte du bouton</p>
-                                <p className="font-medium">{etape.texteButton}</p>
-                              </div>
-                            )}
-                            {etape.bannerLink && (
-                              <div>
-                                <p className="text-sm text-muted-foreground">Lien de la bannière</p>
-                                <p className="font-medium break-all">{etape.bannerLink}</p>
-                              </div>
-                            )}
-                            {etape.buttonLink && (
-                              <div>
-                                <p className="text-sm text-muted-foreground">Lien du bouton</p>
-                                <p className="font-medium break-all">{etape.buttonLink}</p>
-                              </div>
-                            )}
-                            {etape.bonReductionActif !== undefined && (
-                              <div className="mt-4 p-3 bg-muted/30 rounded-md">
-                                <p className="mb-2">
-                                  <span className="font-medium">Bon de réduction: </span>
-                                  <span
-                                    className={`px-2 py-1 rounded-full text-xs font-medium ${
-                                      etape.bonReductionActif
-                                        ? "bg-green-100 text-green-800"
-                                        : "bg-red-100 text-red-800"
-                                    }`}
-                                  >
-                                    {etape.bonReductionActif ? "Activé" : "Désactivé"}
-                                  </span>
-                                </p>
-                                {etape.bonReductionActif && (
-                                  <div className="mt-2">
-                                    <p>
-                                      <span className="font-medium">Réduction: </span>
-                                      {etape.montantReduction} {etape.typeReduction === "pourcentage" ? "%" : "€"}
-                                    </p>
-                                  </div>
-                                )}
-                              </div>
-                            )}
-                            {(etape.utmSource ||
-                              etape.utmMedium ||
-                              etape.utmCampaign) && (
-                              <div>
-                                <p className="text-sm text-muted-foreground">Paramètres UTM de la bannière</p>
-                                <div className="grid grid-cols-2 gap-2 mt-1 text-sm">
-                                  {etape.utmSource && (
-                                    <div>
-                                      <span className="font-medium">Source:</span> {etape.utmSource}
-                                    </div>
-                                  )}
-                                  {etape.utmMedium && (
-                                    <div>
-                                      <span className="font-medium">Medium:</span> {etape.utmMedium}
-                                    </div>
-                                  )}
-                                  {etape.utmCampaign && (
-                                    <div>
-                                      <span className="font-medium">Campaign:</span> {etape.utmCampaign}
-                                    </div>
-                                  )}
-                                </div>
-                              </div>
-                            )}
-                            {(etape.buttonUtmSource ||
-                              etape.buttonUtmMedium ||
-                              etape.buttonUtmCampaign) && (
-                              <div>
-                                <p className="text-sm text-muted-foreground">Paramètres UTM du bouton</p>
-                                <div className="grid grid-cols-2 gap-2 mt-1 text-sm">
-                                  {etape.buttonUtmSource && (
-                                    <div>
-                                      <span className="font-medium">Source:</span> {etape.buttonUtmSource}
-                                    </div>
-                                  )}
-                                  {etape.buttonUtmMedium && (
-                                    <div>
-                                      <span className="font-medium">Medium:</span> {etape.buttonUtmMedium}
-                                    </div>
-                                  )}
-                                  {etape.buttonUtmCampaign && (
-                                    <div>
-                                      <span className="font-medium">Campaign:</span> {etape.buttonUtmCampaign}
-                                    </div>
-                                  )}
-                                </div>
-                              </div>
-                            )}
-                          </CardContent>
-                        </Card>
-                      ))}
-                    </CardContent>
-                  </Card>
-
-                  <Card className="border shadow-sm">
-                    <CardHeader className="bg-muted/50 pb-3">
-                      <CardTitle className="text-base font-medium">Statistiques</CardTitle>
-                    </CardHeader>
-                    <CardContent className="pt-4">
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                        <div className="bg-muted/20 p-4 rounded-lg">
-                          <p className="text-sm text-muted-foreground">Total paniers</p>
-                          <p className="text-2xl font-bold">{selectedScenarioForDetail.statistiques.totalPaniers}</p>
-                        </div>
-                        <div className="bg-muted/20 p-4 rounded-lg">
-                          <p className="text-sm text-muted-foreground">Paniers relancés</p>
-                          <p className="text-2xl font-bold">{selectedScenarioForDetail.statistiques.paniersRelances}</p>
-                        </div>
-                        <div className="bg-muted/20 p-4 rounded-lg">
-                          <p className="text-sm text-muted-foreground">Paniers convertis</p>
-                          <p className="text-2xl font-bold">
-                            {selectedScenarioForDetail.statistiques.paniersConvertis}
-                          </p>
-                        </div>
-                        <div className="bg-muted/20 p-4 rounded-lg">
-                          <p className="text-sm text-muted-foreground">Taux de conversion</p>
-                          <p className="text-2xl font-bold">{selectedScenarioForDetail.statistiques.tauxConversion}%</p>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  <h3 className="text-lg font-medium">Qu'est-ce qu'un scénario de relance ?</h3>
-                  <p>
-                    Un scénario de relance est une séquence automatisée d'emails envoyés aux clients qui ont abandonné
-                    leur panier d'achat. L'objectif est de rappeler au client les produits qu'il a laissés dans son
-                    panier et de l'encourager à finaliser son achat.
-                  </p>
-
-                  <h3 className="text-lg font-medium">Structure d'un mail de relance</h3>
-                  <div className="space-y-2 border rounded-md p-4 bg-gray-50">
-                    <p>Chaque mail de relance est composé des éléments suivants :</p>
-                    <ul className="list-disc pl-6 space-y-2">
-                      <li>
-                        <strong>Objet du mail</strong> : L'objet qui apparaît dans la boîte de réception du client (ex:
-                        "Votre panier vous attend !")
-                      </li>
-                      <li>
-                        <strong>Texte d'aperçu</strong> : Le texte qui apparaît comme prévisualisation dans certains
-                        clients mail (ex: "Découvrez les articles que vous avez sélectionnés...")
-                      </li>
-                      <li>
-                        <strong>Titre du mail</strong> : Le titre qui apparaît dans l'en-tête du mail (ex: "Newsletter -
-                        Site Principal")
-                      </li>
-                      <li>
-                        <strong>Image du mail</strong> : Une bannière ou image principale qui apparaît en haut du mail
-                      </li>
-                      <li>
-                        <strong>Contenu du mail (partie haute)</strong> : Le texte principal qui apparaît au début du
-                        mail
-                      </li>
-                      <li>
-                        <strong>Contenu du mail (partie basse)</strong> : Le texte qui apparaît en fin de mail,
-                        généralement pour inciter à l'action
-                      </li>
-                      <li>
-                        <strong>Texte du bouton</strong> : Le texte du bouton d'action (ex: "Voir mon panier")
-                      </li>
-                      <li>
-                        <strong>Liens et paramètres UTM</strong> : Les liens de la bannière et du bouton, ainsi que les
-                        paramètres de suivi UTM pour analyser les performances
-                      </li>
-                    </ul>
-                  </div>
-
-                  <h3 className="text-lg font-medium">Comment fonctionne un scénario ?</h3>
-                  <p>
-                    Chaque scénario est composé d'une ou plusieurs étapes. Une étape correspond à l'envoi d'un email à
-                    un moment précis. Le délai entre chaque étape est configurable, ainsi que le contenu de chaque
-                    email.
-                  </p>
-
-                  <h3 className="text-lg font-medium">Critères d'inscription</h3>
-                  <p>
-                    Les critères d'inscription déterminent quels paniers abandonnés seront inclus dans le scénario de
-                    relance. Vous pouvez définir un délai après lequel un panier est considéré comme abandonné.
-                  </p>
-
-                  <h3 className="text-lg font-medium">Étapes de relance</h3>
-                  <p>Chaque étape de relance correspond à l'envoi d'un email. Vous pouvez configurer :</p>
-                  <ul className="list-disc pl-6 space-y-2">
-                    <li>
-                      Le délai avant l'envoi de l'email (par rapport à l'étape précédente ou à l'abandon du panier pour
-                      la première étape)
-                    </li>
-                    <li>Le titre, le sujet et le texte d'aperçu du mail</li>
-                    <li>L'image à inclure dans le mail</li>
-                    <li>Le contenu du mail (parties haute et basse)</li>
-                    <li>Les liens et paramètres UTM pour le suivi des performances</li>
-                  </ul>
-
-                  <h3 className="text-lg font-medium">Statistiques</h3>
-                  <p>Pour chaque scénario, vous pouvez consulter des statistiques détaillées :</p>
-                  <ul className="list-disc pl-6 space-y-2">
-                    <li>Nombre total de paniers concernés</li>
-                    <li>Nombre de paniers relancés</li>
-                    <li>Nombre de paniers convertis en commande</li>
-                    <li>Taux de conversion</li>
-                  </ul>
-                </div>
-              )}
+            <CardContent>
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="bg-gray-100 font-medium sticky left-0 z-10">Scénario</TableHead>
+                      <TableHead className="text-right bg-blue-50">Site</TableHead>
+                      <TableHead className="text-right bg-blue-50">Paniers relancés</TableHead>
+                      <TableHead className="text-right bg-blue-50">Paniers convertis</TableHead>
+                      <TableHead className="text-right bg-blue-50">Taux de conversion</TableHead>
+                      <TableHead className="text-right bg-yellow-50">Emails envoyés</TableHead>
+                      <TableHead className="text-right bg-yellow-50">Emails ouverts</TableHead>
+                      <TableHead className="text-right bg-yellow-50">Taux d'ouverture</TableHead>
+                      <TableHead className="text-right bg-green-50">Total ouvertures</TableHead>
+                      <TableHead className="text-right bg-green-50">Total clics</TableHead>
+                      <TableHead className="text-right bg-green-50">Taux de clic</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {scenarioMetrics.map((sc) => (
+                      <TableRow key={sc.nom}>
+                        <TableCell className="font-medium sticky left-0 bg-white z-10">{sc.nom}</TableCell>
+                        <TableCell className="text-right bg-blue-50">{sc.site}</TableCell>
+                        <TableCell className="text-right bg-blue-50">{sc.paniers_relances}</TableCell>
+                        <TableCell className="text-right bg-blue-50">{sc.paniers_convertis}</TableCell>
+                        <TableCell className="text-right bg-blue-50">{sc.taux_conversion}%</TableCell>
+                        <TableCell className="text-right bg-yellow-50">{sc.is_send}</TableCell>
+                        <TableCell className="text-right bg-yellow-50">{sc.is_open}</TableCell>
+                        <TableCell className="text-right bg-yellow-50">{sc.openRate}%</TableCell>
+                        <TableCell className="text-right bg-green-50">{sc.nb_opened}</TableCell>
+                        <TableCell className="text-right bg-green-50">{sc.nb_clicks}</TableCell>
+                        <TableCell className="text-right bg-green-50">{sc.clickRate}%</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
