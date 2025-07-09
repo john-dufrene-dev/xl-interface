@@ -4,11 +4,12 @@ import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { format } from "date-fns"
 import { fr } from "date-fns/locale"
-import { ArrowLeft, ShoppingCart, FileDown } from "lucide-react"
+import { ArrowLeft, ShoppingCart, FileDown, User, Eye, Package } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import React from "react"
 
 // Types
 type PanierItem = {
@@ -37,6 +38,7 @@ type PanierDetail = {
   created_at: string
   updated_at: string
   id_site: string
+  id_order?: string // Ajout d'un champ fictif id_order pour la démo
   contact: {
     id: string
     firstname: string
@@ -54,6 +56,7 @@ type PanierDetail = {
 
 export default function PanierDetailPage({ params }: { params: { id: string } }) {
   const router = useRouter()
+  const { id } = React.use(params)
   const [panier, setPanier] = useState<PanierDetail | null>(null)
   const [loading, setLoading] = useState(true)
 
@@ -62,7 +65,7 @@ export default function PanierDetailPage({ params }: { params: { id: string } })
     // Dans un cas réel, vous feriez un appel API ici
     setTimeout(() => {
       setPanier({
-        id: params.id,
+        id: id,
         id_cart: "CART123",
         id_contact: "CONT456",
         amount: 129.99,
@@ -73,6 +76,7 @@ export default function PanierDetailPage({ params }: { params: { id: string } })
         created_at: "2023-05-15T10:30:00",
         updated_at: "2023-05-15T10:35:00",
         id_site: "1",
+        id_order: "ORD123456", // Ajouté pour la démo
         contact: {
           id: "CONT456",
           firstname: "Jean",
@@ -116,7 +120,7 @@ export default function PanierDetailPage({ params }: { params: { id: string } })
       })
       setLoading(false)
     }, 500)
-  }, [params.id])
+  }, [id])
 
   if (loading) {
     return (
@@ -160,8 +164,15 @@ export default function PanierDetailPage({ params }: { params: { id: string } })
       <div className="grid gap-6 md:grid-cols-2">
         <Card>
           <CardHeader>
-            <CardTitle>Informations du client</CardTitle>
-            <CardDescription>Détails du contact associé au panier</CardDescription>
+            <div className="flex justify-between items-center">
+              <div>
+                <CardTitle>Informations du client</CardTitle>
+                <CardDescription>Détails du contact associé au panier</CardDescription>
+              </div>
+              <Button variant="outline" size="icon" className="h-8 w-8 p-0 hover:bg-gray-200" title="Voir le client" onClick={() => router.push(`/clients/${panier.contact.id}`)}>
+                <User className="w-5 h-5" />
+              </Button>
+            </div>
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
@@ -199,34 +210,37 @@ export default function PanierDetailPage({ params }: { params: { id: string } })
           <CardContent className="space-y-4">
             <div className="flex justify-between">
               <span>Total produits (HT)</span>
-              <span>
-                {new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }).format(
-                  panier.total_paid_tax_excl,
-                )}
-              </span>
+              <span>{new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }).format(panier.total_paid_tax_excl)}</span>
             </div>
             <div className="flex justify-between">
               <span>TVA</span>
-              <span>
-                {new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }).format(panier.total_tax_vat)}
-              </span>
+              <span>{new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }).format(panier.total_tax_vat)}</span>
             </div>
             <Separator />
             <div className="flex justify-between font-bold">
               <span>Total (TTC)</span>
-              <span>
-                {new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }).format(panier.amount)}
-              </span>
+              <span>{new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }).format(panier.amount)}</span>
+            </div>
+            <div className="flex items-center gap-4 mt-4">
+              <span>Converti en commande :</span>
+              {panier.id_order ? (
+                <span className="inline-block"><span className="bg-green-100 text-green-800 px-2 py-0.5 rounded text-xs font-medium">Oui</span></span>
+              ) : (
+                <span className="inline-block"><span className="bg-red-100 text-red-800 px-2 py-0.5 rounded text-xs font-medium">Non</span></span>
+              )}
+              {panier.id_order && (
+                <Button variant="outline" size="sm" onClick={() => router.push(`/commandes/${panier.id_order}`)}>
+                  <Package className="mr-2 h-4 w-4" />
+                  Voir la commande
+                </Button>
+              )}
             </div>
           </CardContent>
-          <CardFooter>
-            <Button variant="outline" className="w-full">
-              <FileDown className="mr-2 h-4 w-4" />
-              Exporter CSV
-            </Button>
-          </CardFooter>
         </Card>
       </div>
+
+      {/* Ajout bouton accès commande si panier converti */}
+      {/* This block is now moved into the Résumé du panier card */}
 
       <Card>
         <CardHeader>
@@ -243,6 +257,7 @@ export default function PanierDetailPage({ params }: { params: { id: string } })
                 <TableHead className="text-right">Prix unitaire</TableHead>
                 <TableHead className="text-center">Quantité</TableHead>
                 <TableHead className="text-right">Total</TableHead>
+                <TableHead className="text-center">Action</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -265,14 +280,13 @@ export default function PanierDetailPage({ params }: { params: { id: string } })
                   </TableCell>
                   <TableCell className="font-medium">{item.name}</TableCell>
                   <TableCell>{item.reference}</TableCell>
-                  <TableCell className="text-right">
-                    {new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }).format(item.price)}
-                  </TableCell>
+                  <TableCell className="text-right">{new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }).format(item.price)}</TableCell>
                   <TableCell className="text-center">{item.quantity}</TableCell>
-                  <TableCell className="text-right font-medium">
-                    {new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }).format(
-                      item.price * item.quantity,
-                    )}
+                  <TableCell className="text-right font-medium">{new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }).format(item.price * item.quantity)}</TableCell>
+                  <TableCell className="text-center">
+                    <Button variant="outline" size="icon" className="h-8 w-8 p-0 hover:bg-gray-200" title="Voir le produit" onClick={() => router.push(`/produits/${item.id_product}`)}>
+                      <Eye className="w-5 h-5" />
+                    </Button>
                   </TableCell>
                 </TableRow>
               ))}

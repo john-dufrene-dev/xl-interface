@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import type { DateRange } from "react-day-picker"
 import { format } from "date-fns"
 import { fr } from "date-fns/locale"
-import { Eye, ArrowUpDown, Search, X } from "lucide-react"
+import { Eye, ArrowUpDown, Search, X, Package } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { DataTable } from "@/components/data-table"
 import { FilterBar } from "@/components/filter-bar"
@@ -24,6 +24,7 @@ type Panier = {
   id_site: string
   contact_name: string
   items_count: number
+  id_order?: string // Added for new button
 }
 
 // Données de démonstration
@@ -39,6 +40,7 @@ const paniers: Panier[] = [
     id_site: "1",
     contact_name: "Jean Dupont",
     items_count: 3,
+    id_order: "ORD123", // Added for new button
   },
   {
     id: "2",
@@ -51,6 +53,7 @@ const paniers: Panier[] = [
     id_site: "1",
     contact_name: "Marie Martin",
     items_count: 5,
+    id_order: "ORD456", // Added for new button
   },
   {
     id: "3",
@@ -134,8 +137,9 @@ export default function PaniersPage() {
       accessorKey: "amount",
       header: ({ column }) => {
         return (
-          <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
-            Montant
+          <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+            className="px-0 h-7 w-full flex justify-end">
+            <span className="w-full text-right">Montant</span>
             <ArrowUpDown className="ml-2 h-4 w-4" />
           </Button>
         )
@@ -146,7 +150,7 @@ export default function PaniersPage() {
           style: "currency",
           currency: "EUR",
         }).format(amount)
-        return <div className="text-right font-medium">{formatted}</div>
+        return <div className="text-right font-medium w-full">{formatted}</div>
       },
     },
     {
@@ -179,10 +183,18 @@ export default function PaniersPage() {
       id: "actions",
       cell: ({ row }) => {
         return (
-          <Button variant="ghost" size="sm" onClick={() => viewDetails(row.original.id)} className="flex items-center">
-            <Eye className="mr-2 h-4 w-4" />
-            Détails
-          </Button>
+          <div className="flex gap-2 items-center">
+            <Button variant="ghost" size="sm" onClick={() => viewDetails(row.original.id)} className="flex items-center">
+              <Eye className="mr-2 h-4 w-4" />
+              Détails
+            </Button>
+            {row.original.id_order && (
+              <Button variant="ghost" size="sm" onClick={() => router.push(`/commandes/${row.original.id_order}`)} className="flex items-center">
+                <Package className="mr-2 h-4 w-4" />
+                Voir la commande
+              </Button>
+            )}
+          </div>
         )
       },
     },

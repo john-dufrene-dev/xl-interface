@@ -10,6 +10,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import React from "react"
 
 // Types
 type ClientDetail = {
@@ -45,11 +46,24 @@ type CommandeClient = {
   created_at: string
 }
 
+// 1. Ajouter un type PanierClient
+
+type PanierClient = {
+  id: string
+  date: string
+  transporteur: string
+  total: number
+}
+
 export default function ClientDetailPage({ params }: { params: { id: string } }) {
   const router = useRouter()
+  const { id } = React.use(params)
   const [client, setClient] = useState<ClientDetail | null>(null)
   const [commandes, setCommandes] = useState<CommandeClient[]>([])
   const [loading, setLoading] = useState(true)
+
+  // 2. Ajouter un état pour les paniers et simuler des données
+  const [paniers, setPaniers] = useState<PanierClient[]>([])
 
   // Fonction pour obtenir la couleur du badge en fonction du statut
   const getStatusColor = (status: string) => {
@@ -74,7 +88,7 @@ export default function ClientDetailPage({ params }: { params: { id: string } })
     // Dans un cas réel, vous feriez un appel API ici
     setTimeout(() => {
       setClient({
-        id: params.id,
+        id: id,
         id_contact: "CONT456",
         company: "Entreprise ABC",
         siret: "12345678901234",
@@ -82,10 +96,10 @@ export default function ClientDetailPage({ params }: { params: { id: string } })
         firstname: "Jean",
         lastname: "Dupont",
         email: "jean.dupont@example.com",
-        birthday: "1985-06-15",
+        birthday: "1983-04-12",
         newsletter: true,
         optin: true,
-        website: "www.example.com",
+        website: "www.entreprise-abc.com",
         created_at: "2023-05-15T10:30:00",
         updated_at: "2023-05-15T10:35:00",
         phonenumber: "01 23 45 67 89",
@@ -93,7 +107,7 @@ export default function ClientDetailPage({ params }: { params: { id: string } })
         zip: "75001",
         city: "Paris",
         country: "France",
-        state: null,
+        state: "Ile-de-France",
         civility: "M.",
         id_site: "1",
       })
@@ -122,9 +136,18 @@ export default function ClientDetailPage({ params }: { params: { id: string } })
         },
       ])
 
+      setPaniers([
+        {
+          id: "936214",
+          date: "2025-07-09 15:24:07",
+          transporteur: "Livraison Mondial Relay",
+          total: 21.32,
+        },
+      ])
+
       setLoading(false)
     }, 500)
-  }, [params.id])
+  }, [id])
 
   if (loading) {
     return (
@@ -150,6 +173,8 @@ export default function ClientDetailPage({ params }: { params: { id: string } })
     )
   }
 
+  // 3. Réorganisation du rendu principal
+
   return (
     <div className="space-y-6">
       <div className="flex items-center">
@@ -167,187 +192,132 @@ export default function ClientDetailPage({ params }: { params: { id: string } })
         </div>
       </div>
 
-      <Tabs defaultValue="profile">
-        <TabsList>
-          <TabsTrigger value="profile">Profil</TabsTrigger>
-          <TabsTrigger value="orders">Commandes</TabsTrigger>
-        </TabsList>
+      <div className="grid gap-6 md:grid-cols-2">
+        {/* Colonne Informations personnelles */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Informations personnelles</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            <div className="flex flex-col gap-1">
+              <span><b>Titre de civilité :</b> {client.civility}</span>
+              <span><b>Âge :</b> {client.birthday ? `${new Date().getFullYear() - new Date(client.birthday).getFullYear()} ans (${format(new Date(client.birthday), "dd/MM/yyyy")})` : "—"}</span>
+              <span><b>Date d'inscription :</b> {format(new Date(client.created_at), "dd/MM/yyyy", { locale: fr })}</span>
+              <span><b>Dernière visite :</b> 10/07/2025</span>
+              <span><b>Place parmi les meilleurs clients :</b> 5ème</span>
+              <span><b>Langue :</b> Français</span>
+              <span><b>Newsletter :</b> <Badge variant="outline" className={client.newsletter && client.optin ? "bg-green-100 text-green-800 px-2 py-0.5 text-xs w-fit" : "bg-red-100 text-red-800 px-2 py-0.5 text-xs w-fit"}>{client.newsletter && client.optin ? "Oui" : "Non"}</Badge></span>
+              <span><b>Dernière mise à jour :</b> {format(new Date(client.updated_at), "dd/MM/yyyy", { locale: fr })}</span>
+              <span><b>Actif :</b> <Badge variant="outline" className={true ? "bg-green-100 text-green-800 px-2 py-0.5 text-xs w-fit" : "bg-red-100 text-red-800 px-2 py-0.5 text-xs w-fit"}>Oui</Badge></span>
+            </div>
+          </CardContent>
+        </Card>
+        {/* Colonne Adresse */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Adresse</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            <div className="flex flex-col gap-1">
+              <span><b>Client :</b> Jean Dupont</span>
+              <span><b>Numéro d'identification fiscale :</b> FR12345678901</span>
+              <span><b>Alias de l'adresse :</b> Bureau principal</span>
+              <span><b>Prénom :</b> Jean</span>
+              <span><b>Nom :</b> Dupont</span>
+              <span><b>Société :</b> Entreprise ABC</span>
+              <span><b>Numéro de TVA :</b> FR12345678901</span>
+              <span><b>Adresse :</b> 123 Rue de Paris</span>
+              <span><b>Adresse (2) :</b> 2ème étage</span>
+              <span><b>Code postal :</b> 75001</span>
+              <span><b>Ville :</b> Paris</span>
+              <span><b>Pays :</b> France</span>
+              <span><b>Téléphone :</b> 01 23 45 67 89</span>
+              <span><b>Téléphone mobile :</b> 06 12 34 56 78</span>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
 
-        <TabsContent value="profile" className="space-y-6 mt-6">
-          <div className="grid gap-6 md:grid-cols-2">
-            <Card>
-              <CardHeader>
-                <CardTitle>Informations personnelles</CardTitle>
-                <CardDescription>Coordonnées et préférences du client</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-center">
-                  <User className="h-4 w-4 mr-2 text-muted-foreground" />
-                  <span className="font-medium">
-                    {client.civility} {client.firstname} {client.lastname}
-                  </span>
-                </div>
-
-                <div className="flex items-center">
-                  <Mail className="h-4 w-4 mr-2 text-muted-foreground" />
-                  <span>{client.email}</span>
-                </div>
-
-                <div className="flex items-center">
-                  <Phone className="h-4 w-4 mr-2 text-muted-foreground" />
-                  <span>{client.phonenumber}</span>
-                </div>
-
-                <div className="flex items-center">
-                  <Building className="h-4 w-4 mr-2 text-muted-foreground" />
-                  <span>Site {client.id_site}</span>
-                </div>
-
-                {client.birthday && (
-                  <div className="flex items-center">
-                    <Calendar className="h-4 w-4 mr-2 text-muted-foreground" />
-                    <span>Né(e) le {format(new Date(client.birthday), "dd MMMM yyyy", { locale: fr })}</span>
-                  </div>
-                )}
-
-                <div className="pt-2">
-                  <div className="flex items-center mb-2">
-                    <Badge
-                      variant="outline"
-                      className={client.newsletter ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800"}
-                    >
-                      {client.newsletter ? "Inscrit à la newsletter" : "Non inscrit à la newsletter"}
+      {/* Section Commandes */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Commandes</CardTitle>
+          <CardDescription>
+            <span className="mr-4">Commandes valides : <Badge className="bg-green-100 text-green-800">{commandes.length}</Badge> pour un montant total de <b>{commandes.length > 0 ? new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }).format(commandes.reduce((acc, c) => acc + c.total_paid, 0)) : "0 €"}</b></span>
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>ID</TableHead>
+                <TableHead>Date</TableHead>
+                <TableHead>Paiement</TableHead>
+                <TableHead>État</TableHead>
+                <TableHead>Produits</TableHead>
+                <TableHead>Total payé</TableHead>
+                <TableHead>Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {commandes.map((commande) => (
+                <TableRow key={commande.id}>
+                  <TableCell>{commande.id}</TableCell>
+                  <TableCell>{format(new Date(commande.created_at), "dd/MM/yyyy", { locale: fr })}</TableCell>
+                  <TableCell>PayPal</TableCell>
+                  <TableCell>
+                    <Badge className={getStatusColor(commande.current_state)}>
+                      {commande.current_state.charAt(0).toUpperCase() + commande.current_state.slice(1)}
                     </Badge>
-                  </div>
+                  </TableCell>
+                  <TableCell>1</TableCell>
+                  <TableCell>{new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }).format(commande.total_paid)}</TableCell>
+                  <TableCell>
+                    <Button variant="ghost" size="sm">
+                      <Package className="h-4 w-4" />
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
 
-                  <div className="flex items-center">
-                    <Badge
-                      variant="outline"
-                      className={client.optin ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800"}
-                    >
-                      {client.optin
-                        ? "Accepte les communications marketing"
-                        : "N'accepte pas les communications marketing"}
-                    </Badge>
-                  </div>
-                </div>
-              </CardContent>
-              <CardFooter>
-                <Button variant="outline" className="w-full">
-                  <FileDown className="mr-2 h-4 w-4" />
-                  Exporter CSV
-                </Button>
-              </CardFooter>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Adresse</CardTitle>
-                <CardDescription>Adresse de facturation et livraison</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-start">
-                  <MapPin className="h-4 w-4 mr-2 mt-1 text-muted-foreground" />
-                  <div>
-                    <p>{client.address}</p>
-                    <p>
-                      {client.zip} {client.city}
-                    </p>
-                    <p>{client.country}</p>
-                  </div>
-                </div>
-
-                {client.company && (
-                  <div className="pt-2">
-                    <div className="flex items-center">
-                      <Building className="h-4 w-4 mr-2 text-muted-foreground" />
-                      <span className="font-medium">{client.company}</span>
-                    </div>
-
-                    {client.siret && (
-                      <div className="ml-6 mt-1">
-                        <p>SIRET: {client.siret}</p>
-                      </div>
-                    )}
-
-                    {client.ape && (
-                      <div className="ml-6 mt-1">
-                        <p>Code APE: {client.ape}</p>
-                      </div>
-                    )}
-
-                    {client.website && (
-                      <div className="ml-6 mt-1">
-                        <p>Site web: {client.website}</p>
-                      </div>
-                    )}
-                  </div>
-                )}
-              </CardContent>
-              <CardFooter>
-                <Button variant="outline" className="w-full">
-                  <FileDown className="mr-2 h-4 w-4" />
-                  Exporter CSV
-                </Button>
-              </CardFooter>
-            </Card>
-          </div>
-        </TabsContent>
-
-        <TabsContent value="orders" className="mt-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Historique des commandes</CardTitle>
-              <CardDescription>Liste des commandes passées par ce client</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {commandes.length > 0 ? (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Référence</TableHead>
-                      <TableHead>Date</TableHead>
-                      <TableHead>Statut</TableHead>
-                      <TableHead className="text-right">Montant</TableHead>
-                      <TableHead></TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {commandes.map((commande) => (
-                      <TableRow key={commande.id}>
-                        <TableCell className="font-medium">{commande.reference}</TableCell>
-                        <TableCell>{format(new Date(commande.created_at), "dd/MM/yyyy", { locale: fr })}</TableCell>
-                        <TableCell>
-                          <Badge className={`${getStatusColor(commande.current_state)}`}>
-                            {commande.current_state.charAt(0).toUpperCase() + commande.current_state.slice(1)}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="text-right">
-                          {new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }).format(
-                            commande.total_paid,
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          <Button variant="ghost" size="sm" onClick={() => router.push(`/commandes/${commande.id}`)}>
-                            <Package className="mr-2 h-4 w-4" />
-                            Voir
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              ) : (
-                <div className="text-center py-6">
-                  <ShoppingBag className="mx-auto h-12 w-12 text-muted-foreground" />
-                  <h3 className="mt-4 text-lg font-medium">Aucune commande</h3>
-                  <p className="text-muted-foreground">Ce client n'a pas encore passé de commande.</p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+      {/* Section Paniers */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Paniers</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>ID</TableHead>
+                <TableHead>Date</TableHead>
+                <TableHead>Transporteur</TableHead>
+                <TableHead>Total</TableHead>
+                <TableHead>Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {paniers.map((panier) => (
+                <TableRow key={panier.id}>
+                  <TableCell>{panier.id}</TableCell>
+                  <TableCell>{panier.date}</TableCell>
+                  <TableCell>{panier.transporteur}</TableCell>
+                  <TableCell>{new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }).format(panier.total)}</TableCell>
+                  <TableCell>
+                    <Button variant="ghost" size="sm">
+                      <Package className="h-4 w-4" />
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
     </div>
   )
 }

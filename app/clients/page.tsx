@@ -11,6 +11,7 @@ import { FilterBar } from "@/components/filter-bar"
 import { useRouter } from "next/navigation"
 import { Badge } from "@/components/ui/badge"
 import { ExportButton } from "@/components/export-button"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 // Types
 type Client = {
@@ -118,6 +119,40 @@ const clients: Client[] = [
     city: "Lille",
     country: "France",
   },
+  {
+    id: "6",
+    id_contact: "CONT404",
+    company: null,
+    firstname: "Claire",
+    lastname: "Moreau",
+    email: "claire.moreau@example.com",
+    newsletter: false,
+    optin: true,
+    created_at: "2023-05-10T13:25:00",
+    id_site: "2",
+    phonenumber: "",
+    address: "987 Rue de la Paix",
+    zip: "13001",
+    city: "Marseille",
+    country: "France",
+  },
+  {
+    id: "7",
+    id_contact: "CONT505",
+    company: null,
+    firstname: "Lucas",
+    lastname: "Dubois",
+    email: "",
+    newsletter: false,
+    optin: false,
+    created_at: "2023-05-09T08:45:00",
+    id_site: "1",
+    phonenumber: "",
+    address: "",
+    zip: "",
+    city: "",
+    country: "France",
+  },
 ]
 
 export default function ClientsPage() {
@@ -125,6 +160,7 @@ export default function ClientsPage() {
   const [dateRange, setDateRange] = useState<DateRange | undefined>()
   const [selectedSite, setSelectedSite] = useState("")
   const [globalSearch, setGlobalSearch] = useState("")
+  const [selectedNewsletter, setSelectedNewsletter] = useState("")
 
   // Fonction pour réinitialiser les filtres
   const resetFilters = () => {
@@ -168,17 +204,27 @@ export default function ClientsPage() {
       accessorKey: "company",
       header: "Société",
       cell: ({ row }) => {
-        return row.original.company || "-"
+        const company = row.original.company
+        return company ? (
+          <span>{company}</span>
+        ) : (
+          <span className="text-muted-foreground italic">—</span>
+        )
       },
     },
     {
       accessorKey: "email",
       header: "Email",
       cell: ({ row }) => {
+        const email = row.original.email
         return (
           <div className="flex items-center">
             <Mail className="mr-2 h-4 w-4 text-muted-foreground" />
-            <span>{row.original.email}</span>
+            {email ? (
+              <span>{email}</span>
+            ) : (
+              <span className="text-muted-foreground italic">—</span>
+            )}
           </div>
         )
       },
@@ -187,10 +233,15 @@ export default function ClientsPage() {
       accessorKey: "phonenumber",
       header: "Téléphone",
       cell: ({ row }) => {
+        const phoneNumber = row.original.phonenumber
         return (
           <div className="flex items-center">
             <Phone className="mr-2 h-4 w-4 text-muted-foreground" />
-            <span>{row.original.phonenumber}</span>
+            {phoneNumber ? (
+              <span>{phoneNumber}</span>
+            ) : (
+              <span className="text-muted-foreground italic">—</span>
+            )}
           </div>
         )
       },
@@ -198,31 +249,60 @@ export default function ClientsPage() {
     {
       accessorKey: "city",
       header: "Ville",
+      cell: ({ row }) => {
+        const city = row.original.city
+        return city ? (
+          <span>{city}</span>
+        ) : (
+          <span className="text-muted-foreground italic">—</span>
+        )
+      },
     },
     {
       accessorKey: "created_at",
       header: ({ column }) => {
         return (
-          <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
-            Date d'inscription
-            <ArrowUpDown className="ml-2 h-4 w-4" />
-          </Button>
+          <div className="text-right w-full flex justify-end items-center">
+            <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+              className="px-0 h-7">
+              Date d'inscription
+              <ArrowUpDown className="ml-2 h-4 w-4" />
+            </Button>
+          </div>
         )
       },
       cell: ({ row }) => {
-        return format(new Date(row.getValue("created_at")), "dd/MM/yyyy", { locale: fr })
+        return (
+          <div className="text-right w-full">
+            {format(new Date(row.getValue("created_at")), "dd/MM/yyyy", { locale: fr })}
+          </div>
+        )
       },
     },
     {
       accessorKey: "newsletter",
-      header: "Newsletter",
+      header: () => (
+        <Select
+          value={selectedNewsletter || "all"}
+          onValueChange={v => setSelectedNewsletter(v === "all" ? "" : v)}
+        >
+          <SelectTrigger className="w-28 h-7 border border-gray-200 bg-white dark:bg-neutral-900 dark:border-neutral-800 rounded-md px-2 py-0 text-xs font-normal text-foreground focus:ring-0 focus:outline-none shadow-none hover:border-gray-300">
+            <SelectValue placeholder="Newsletter" className="text-xs" />
+          </SelectTrigger>
+          <SelectContent className="text-xs">
+            <SelectItem value="all">Tous</SelectItem>
+            <SelectItem value="inscrit">Inscrits</SelectItem>
+            <SelectItem value="non">Non inscrits</SelectItem>
+          </SelectContent>
+        </Select>
+      ),
       cell: ({ row }) => {
         return row.getValue("newsletter") ? (
-          <Badge variant="outline" className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300">
+          <Badge variant="outline" className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300 px-3 py-1 rounded font-medium">
             Inscrit
           </Badge>
         ) : (
-          <Badge variant="outline" className="bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300">
+          <Badge variant="outline" className="bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300 px-3 py-1 rounded font-medium">
             Non inscrit
           </Badge>
         )
@@ -253,9 +333,13 @@ export default function ClientsPage() {
   const filteredData = clients.filter((client) => {
     let matchesSite = true
     let matchesGlobal = true
+    let matchesNewsletter = true
 
     if (selectedSite) {
       matchesSite = client.id_site === selectedSite
+    }
+    if (selectedNewsletter) {
+      matchesNewsletter = selectedNewsletter === "inscrit" ? client.newsletter : !client.newsletter
     }
     if (globalSearch) {
       const search = globalSearch.toLowerCase()
@@ -266,7 +350,7 @@ export default function ClientsPage() {
         (client.company ? client.company.toLowerCase().includes(search) : false)
       )
     }
-    return matchesSite && matchesGlobal
+    return matchesSite && matchesNewsletter && matchesGlobal
   })
 
   return (
@@ -287,7 +371,7 @@ export default function ClientsPage() {
         onReset={resetFilters}
       />
 
-      <div className="flex justify-start">
+      <div className="flex gap-4 items-center mb-2">
         <div className="relative w-64">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
           <input
